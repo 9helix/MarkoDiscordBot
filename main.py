@@ -6,24 +6,13 @@ from keep_alive import keep_alive
 import requests
 from bs4 import BeautifulSoup
 from discord.ext import commands
-from discord_slash import SlashCommand, SlashContext
-from discord_slash.utils.manage_commands import create_choice, create_option
 import sys
 import json
 from datetime import datetime, timedelta
 
 client = commands.Bot(command_prefix='-')
-slash = SlashCommand(client, sync_commands=True)
 guilds = [guild.id for guild in client.guilds]
 
-
-@slash.slash(
-    name='test',
-    description='Test command',
-    guild_ids=guilds
-)
-async def _test(ctx: SlashContext):
-    await ctx.send('Test')
 
 admin = int(os.environ['admin_id'])
 my_channel = int(os.environ['my_channel'])
