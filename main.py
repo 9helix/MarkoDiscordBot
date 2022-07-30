@@ -496,7 +496,7 @@ async def self(interaction: discord.Interaction):
     )
     embed.set_author(
         name='Mirko Bot', icon_url='https://static.miraheze.org/hololivewiki/thumb/0/06/Album_Cover_Art_-_YoinoYoYoi.png/1200px-Album_Cover_Art_-_YoinoYoYoi.png')
-    embed.set_footer(text=f'For aditional information message <@{admin}>')
+    embed.set_footer(text='For aditional information message Helix#3958')
     embed.set_thumbnail(
         url=r'https://i.ibb.co/4TCmGnj/20220701-202610.png')
     await interaction.response.send_message(embed=embed)
@@ -513,4 +513,4 @@ async def on_command_error(ctx, error):
     if isinstance(error, discord.ext.commands.errors.CommandNotFound):
         await ctx.send("Unknown command.")
 keep_alive()
-bot.run("NzYwNTAzMTgzMTA0ODAyODM3.GZGNid.i0ULrbSsFUp2b5RmUfwMxZCwdwhv9PoywTrQEM")
+bot.run(token)
