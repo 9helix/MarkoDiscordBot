@@ -366,7 +366,7 @@ async def self(interaction: discord.Interaction, user: discord.Member):
             else:
                 f.write(str(user.id) + '\n')
                 f.close()
-                await interaction.response.send_message('User blocked.')
+                await interaction.response.send_message(f'User <@{user.id}> blocked.')
         except:
             await interaction.response.send_message('Unknown user.')
     else:
@@ -384,14 +384,14 @@ async def self(interaction: discord.Interaction, user: discord.Member):
             f.close()
             #print(lines, str(user.id)+'\n')
             if str(user.id)+'\n' not in lines:
-                await interaction.response.send_message('User is already unblocked.')
+                await interaction.response.send_message(f'User <@{user.id}> is already unblocked.')
             else:
                 f = open('database/blocked.txt', 'w')
                 for line in lines:
                     if line != str(user.id) + '\n':
                         f.write(line)
                 f.close()
-                await interaction.response.send_message('User unblocked.')
+                await interaction.response.send_message(f'User <@{user.id}> unblocked.')
         except Exception as e:
             # print(e)
             await interaction.response.send_message('Unknown user.')
@@ -496,7 +496,7 @@ async def self(interaction: discord.Interaction):
     )
     embed.set_author(
         name='Mirko Bot', icon_url='https://static.miraheze.org/hololivewiki/thumb/0/06/Album_Cover_Art_-_YoinoYoYoi.png/1200px-Album_Cover_Art_-_YoinoYoYoi.png')
-    embed.set_footer(text='For aditional information message @Helix#3958')
+    embed.set_footer(text=f'For aditional information message <@{admin}>')
     embed.set_thumbnail(
         url=r'https://i.ibb.co/4TCmGnj/20220701-202610.png')
     await interaction.response.send_message(embed=embed)
