@@ -1,21 +1,23 @@
 import discord
-import random
-import asyncio
-import os
-from keep_alive import keep_alive
-import requests
-from bs4 import BeautifulSoup
 from discord.ext import commands
-import sys
-import json
+from discord import app_commands
+from discord.ext import tasks
+import random
+from bs4 import BeautifulSoup
+import requests
 from datetime import datetime, timedelta
+import json
+import os
+import sys
+import asyncio
+from keep_alive import keep_alive
 
-client = commands.Bot(command_prefix='-')
-guilds = [guild.id for guild in client.guilds]
-
+bot = commands.Bot(command_prefix='-', intents=discord.Intents.all())
 
 admin = int(os.environ['admin_id'])
 my_channel = int(os.environ['my_channel'])
+token = str(os.environ['token'])
+
 space = '<:space:988547133902819378>'
 ojou = '<:ojou:990313694204395540>'
 
@@ -233,160 +235,174 @@ def moon_find():
     return embed
 
 
-@client.event
-async def on_ready():
-    print(f"Logged in as {client.user}")
-    f = open('database/reboot.txt', 'r+')
-    # print(str(f.read()),f.read()=='',f.read())
-    line = f.readline()
-    if line != '':
-        await client.get_channel(int(line)).send('Reboot successful!')
-        f.truncate(0)
-    else:
+class mirko(discord.Client):
+    def __init__(self):
+        super().__init__(intents=discord.Intents.all())
+        self.synced = False
+
+    async def on_ready(self):
+        await tree.sync(guild=discord.Object(id=913678455223251004))
+        self.synced = True
+        print(f"Logged in as {bot.user}")
+        # await bot.change_presence(status=discord.Status.online, activity=discord.Game('discord.py'))
+
+    async def setup_hook(self) -> None:
+        self.ch_pr.start()
+        self.bg_task = self.loop.create_task(self.reboot_task())
+        self.astro_newsletter.start()
+        # self.price_newsletter.start()
+
+    async def reboot_task(self):
+        await self.wait_until_ready()
+        #print(f"Logged in as {bot.user}")
+        f = open('database/reboot.txt', 'r+')
+        # print(str(f.read()),f.read()=='',f.read())
+        line = f.readline()
+        if line != '':
+            await bot.get_channel(int(line)).send('Reboot successful!')
+            f.truncate(0)
+        else:
+            f.close()
+
+    @tasks.loop(seconds=timer(hr=9, days=1))
+    async def price_newsletter(self):
+
+        f = open('database/subbed_ch.txt', 'r')
+        subbed = f.readlines()
         f.close()
 
+        for cn in subbed:
+            cn = int(cn[:len(cn) - 1])
+            await bot.get_channel(cn).send(embed=moon_find())
 
-@client.event
-async def ch_pr():
-    await client.wait_until_ready()
-    statuses = [
-        f"on {len(client.guilds)} servers", "discord.py", '-info za pomoć'
-    ]
-    i = 0
-    while not client.is_closed():
-        if i < 3:
-            status = statuses[i]
-            await client.change_presence(activity=discord.Game(name=status))
-            i += 1
-        else:
-            await client.change_presence(activity=discord.Activity(
-                type=discord.ActivityType.watching, name="Anime"))
-            i = 0
-        await asyncio.sleep(30)
+            await bot.get_channel(cn).send(embed=sun_find())
+
+    @price_newsletter.before_loop
+    async def before_price_newsletter(self):
+        await self.wait_until_ready()
+        await asyncio.sleep(timer(hr=9, days=1))
+
+    @tasks.loop(seconds=timer(hr=12))
+    async def astro_newsletter(self):
+
+        f = open('database/subbed_ch.txt', 'r')
+        subbed = f.readlines()
+        f.close()
+
+        for cn in subbed:
+            cn = int(cn[:len(cn) - 1])
+            await bot.get_channel(cn).send(embed=moon_find())
+
+            await bot.get_channel(cn).send(embed=sun_find())
+
+    @astro_newsletter.before_loop
+    async def before_astro_newsletter(self):
+        await self.wait_until_ready()
+        await asyncio.sleep(timer(hr=12))
+
+    @tasks.loop(seconds=30)
+    async def ch_pr(self):
+        statuses = [
+            f"on {len(bot.guilds)} servers", "discord.py", '-info for help', 'anime'
+        ]
+        status = random.choice(statuses)
+        act = discord.Game(name=status) if statuses.index(status) < 2 else discord.Activity(type=discord.ActivityType.watching,
+                                                                                            name=status) if statuses.index(status) == 3 else discord.Activity(type=discord.ActivityType.listening, name=status)
+        await bot.change_presence(status=discord.Status.online, activity=act)
+
+    @ch_pr.before_loop
+    async def before_ch_pr(self):
+        await self.wait_until_ready()
 
 
-@client.listen('on_message')
-async def message_checker(message):
-    if 'hvala' in message.content or 'thx' in message.content:
-        await message.channel.send('Nema na čemu!')
+bot = mirko()
+tree = app_commands.CommandTree(bot)
 
 
-@client.event
-async def on_command_error(ctx, error):
-    if isinstance(error, discord.ext.commands.errors.CommandNotFound):
-        await ctx.send("Unknown command.")
+@tree.command(name='ping', description='Sends bot\'s ping', guild=discord.Object(id=913678455223251004))
+async def self(interaction: discord.Interaction):
+    await interaction.response.send_message(f'Pong! {round(bot.latency*1000)} ms')
 
 
-@client.command()
-async def test(ctx, channel: discord.TextChannel = None):
-    if channel != None:
-        await channel.send(channel.id)
-
-
-@client.command()
-async def send(ctx, arg1, arg2):
-    if ctx.author.id == admin:
+@tree.command(name='send', description='Sends a message to a channel [DEV ONLY]', guild=discord.Object(id=913678455223251004))
+async def self(interaction: discord.Interaction, channel: int, message: str):
+    if interaction.user.id == admin:
         try:
-            channel = client.get_channel(arg1)
-            await channel.send(arg2)
-            await ctx.send('Poruka poslana.')
+            channel = bot.get_channel(channel)
+            await channel.send(message)
+            await interaction.response.send_message('Message sent.')
         except:
-            await ctx.send('Ne znam taj kanal.')
-
-
-@client.command()
-async def info(ctx):
-    embed = discord.Embed(
-        title='Mirko Bot Komande',
-        description=' \n**-img**   \nšalje random sliku iz baze podataka \n\n  **-pong**  \n šalje Mirkov ping \n\n  **-dm user_id "poruka"**  \nšalje poruku u DM, ako nema id-a poruka se šalje pošiljatelju poruke \n\n  **-sun**  \n šalje podatke o trenutnoj Sunčevoj aktivnosti \n\n  **-moon**  \n šalje trenutnu osvjetljenost Mjeseca',
-        color=discord.Colour.red(),
-    )
-    embed.set_thumbnail(
-        url=r'https://i.ibb.co/4TCmGnj/20220701-202610.png')
-    await ctx.send(embed=embed)
-
-
-@client.command()
-async def quit(ctx):
-    if ctx.author.id == admin:
-        await ctx.send('Odjavljujem se...')
-        await client.close()
-
-
-@client.command()
-async def reboot(ctx):
-    if ctx.author.id == admin:
-        f = open('database/reboot.txt', 'w')
-        f.write(str(ctx.channel.id))
-        print(str(ctx.channel.id))
-        f.close()
-        await ctx.send('Restarting...')
-        os.system("clear")
-        os.execv(sys.executable, ['python'] + sys.argv)
-
-
-@client.command()
-async def img(ctx):
-    imgs = os.listdir(r'database/images')
-    # imgs.remove('mauro.png')
-    # imgs.remove('therock.gif')
-    await ctx.send(file=discord.File(r'database/images/' + random.choice(imgs))
-                   )
-
-
-@client.command()
-async def ping(ctx):
-    await ctx.send(f'Pong! {round(client.latency * 1000)} ms')
-
-
-@client.command()
-async def dm(ctx, *args):
-    stopdm = False
-    cont = random.choice(dms)
-    if len(args) != 0:
-        for arg in args:
-            try:
-                int(arg)
-                try:
-                    user = await client.fetch_user(int(arg))
-                except:
-                    await ctx.send('Ne poznajem tog usera.')
-                    stopdm = True
-            except:
-                cont = arg
+            await interaction.response.send_message('Unknyown channel.')
     else:
-        user = await client.fetch_user(ctx.author.id)
-    if not stopdm:
-        if cont == 'rock':
-            await discord.DMChannel.send(
-                user, file=discord.File(r'database/images/rock_sus.gif'))
-
-        else:
-            await discord.DMChannel.send(user, content=cont)
-        await ctx.send('Poruka je poslana.')
+        interaction.response.send_message('Only devs can use this command.')
 
 
-@client.command()
-async def sun(ctx):
-    await ctx.send(embed=sun_find())
+@tree.command(name='sun', description='Sends Sun Status', guild=discord.Object(id=913678455223251004))
+async def self(interaction: discord.Interaction):
+    await interaction.response.send_message(embed=sun_find())
 
 
-@client.command()
-async def moon(ctx):
-    await ctx.send(embed=moon_find())
+@tree.command(name='moon', description='Sends Moon Status', guild=discord.Object(id=913678455223251004))
+async def self(interaction: discord.Interaction):
+    await interaction.response.send_message(embed=moon_find())
 
 
-@client.command()
-async def price(ctx):
+@tree.command(name='price', description='Sends product\'s current price', guild=discord.Object(id=913678455223251004))
+async def self(interaction: discord.Interaction):
     res = price_checker()
-    await client.get_channel(my_channel).send(embed=res[0])
-    await client.get_channel(my_channel).send(embed=res[1])
+    await bot.get_channel(my_channel).send(embed=res[0])
+    await bot.get_channel(my_channel).send(embed=res[1])
 
 
-@client.command()
-async def subscribe(ctx, channel: discord.TextChannel = None):
+@tree.command(name='block', description='Blocks a user from using the bot [DEV ONLY]', guild=discord.Object(id=913678455223251004))
+async def self(interaction: discord.Interaction, user: discord.Member):
+    if interaction.user.id == admin:
+        try:
+            #user = bot.get_user(user)
+            f = open('database/blocked.txt', 'a+')
+            f.seek(0)
+            if str(user.id)+'\n' in f.readlines():
+                await interaction.response.send_message('User already blocked.')
+            else:
+                f.write(str(user.id) + '\n')
+                f.close()
+                await interaction.response.send_message('User blocked.')
+        except:
+            await interaction.response.send_message('Unknown user.')
+    else:
+        interaction.response.send_message('Only devs can use this command.')
+
+
+@tree.command(name='unblock', description='Unblocks a user from using the bot [DEV ONLY]', guild=discord.Object(id=913678455223251004))
+async def self(interaction: discord.Interaction, user: discord.Member):
+    if interaction.user.id == admin:
+        try:
+            #user = bot.get_user(user)
+            f = open('database/blocked.txt', 'a+')
+            f.seek(0)
+            lines = f.readlines()
+            f.close()
+            #print(lines, str(user.id)+'\n')
+            if str(user.id)+'\n' not in lines:
+                await interaction.response.send_message('User is already unblocked.')
+            else:
+                f = open('database/blocked.txt', 'w')
+                for line in lines:
+                    if line != str(user.id) + '\n':
+                        f.write(line)
+                f.close()
+                await interaction.response.send_message('User unblocked.')
+        except Exception as e:
+            # print(e)
+            await interaction.response.send_message('Unknown user.')
+    else:
+        interaction.response.send_message('Only devs can use this command.')
+
+
+@tree.command(name='subscribe', description='Subscribes a given/current channel', guild=discord.Object(id=913678455223251004))
+async def self(interaction: discord.Interaction, channel: discord.TextChannel = None):
     if channel == None:
-        cn_id = ctx.channel.id
+        cn_id = interaction.channel_id
     else:
         cn_id = channel.id
     f = open('database/subbed_ch.txt', 'r')
@@ -394,19 +410,19 @@ async def subscribe(ctx, channel: discord.TextChannel = None):
     f.close()
 
     if str(cn_id) + '\n' in subbed:
-        await ctx.send('This channel is already subscribed.')
+        await interaction.response.send_message('This channel is already subscribed.')
     else:
         f = open('database/subbed_ch.txt', 'a')
         f.write(str(cn_id) + '\n')
         f.close()
         subbed.append(cn_id)
-        await ctx.send('Successfully subscribed!')
+        await interaction.response.send_message('Successfully subscribed!')
 
 
-@client.command()
-async def unsubscribe(ctx, channel: discord.TextChannel = None):
+@tree.command(name='unsubscribe', description='Unsubscribes a given/current channel', guild=discord.Object(id=913678455223251004))
+async def self(interaction: discord.Interaction, channel: discord.TextChannel = None):
     if channel == None:
-        cn_id = ctx.channel.id
+        cn_id = interaction.channel_id
     else:
         cn_id = channel.id
     f = open('database/subbed_ch.txt', 'r')
@@ -418,44 +434,83 @@ async def unsubscribe(ctx, channel: discord.TextChannel = None):
         f = open('database/subbed_ch.txt', 'w')
         f.writelines(subbed)
         f.close()
-        await ctx.send('Successfully unsubscribed!')
+        await interaction.response.send_message('Successfully unsubscribed!')
     else:
-        await ctx.send('This channel is already unsubscribed.')
+        await interaction.response.send_message('This channel is already unsubscribed.')
 
 
-@client.event
-async def astro_newsletter():
-    await client.wait_until_ready()
-    await asyncio.sleep(timer(hr=12))
-    f = open('database/subbed_ch.txt', 'r')
-    subbed = f.readlines()
-    f.close()
+@tree.command(name='dm', description='DMs a given user/sender with a custom/random message', guild=discord.Object(id=913678455223251004))
+async def self(interaction: discord.Interaction, user: discord.User = None, message: str = None):
+    if message == None:
+        message = random.choice(dms)
+    if user == None:
+        user = interaction.user
 
-    for cn in subbed:
-        cn = int(cn[:len(cn) - 1])
-        await client.get_channel(cn).send(embed=moon_find())
+    try:
+        await discord.DMChannel.send(
+            user, file=discord.File(rf'database/images/{message}'))
 
-        await client.get_channel(cn).send(embed=sun_find())
+    except:
+        await discord.DMChannel.send(user, content=message)
+    await interaction.response.send_message('Message sent.')
 
 
-@client.event
-async def price_newsletter():
+@tree.command(name='img', description='Sends a random image from the database', guild=discord.Object(id=913678455223251004))
+async def self(interaction: discord.Interaction):
+    imgs = os.listdir(r'database/images')
+    # imgs.remove('mauro.png')
+    # imgs.remove('therock.gif')
+    await interaction.response.send_message(file=discord.File(rf'database/images/{random.choice(imgs)}')
+                                            )
 
-    await client.wait_until_ready()
 
-    await asyncio.sleep(timer(hr=9, days=1))
+@tree.command(name='quit', description='Shuts down the bot [DEV ONLY]', guild=discord.Object(id=913678455223251004))
+async def self(interaction: discord.Interaction):
+    if interaction.user.id == admin:
+        await interaction.response.send_message('Shutting down...')
+        await bot.close()
+    else:
+        await interaction.response.send_message('Only devs can use this command.')
 
-    res = price_checker()
-    await client.get_channel(my_channel).send(embed=res[0])
-    await client.get_channel(my_channel).send(embed=res[1])
 
-token = str(os.environ['token'])
-client.loop.create_task(ch_pr())
-client.loop.create_task(astro_newsletter())
-# client.loop.create_task(price_newsletter())
+@tree.command(name='reboot', description='Restarts the bot [DEV ONLY]', guild=discord.Object(id=913678455223251004))
+async def self(interaction: discord.Interaction):
+    if interaction.user.id == admin:
+        f = open('database/reboot.txt', 'w')
+        f.write(str(interaction.channel_id))
+        print(str(interaction.channel_id))
+        f.close()
+        await interaction.response.send_message('Restarting...')
+        os.system("clear")
+        os.execv(sys.executable, ['python'] + sys.argv)
+    else:
+        await interaction.response.send_message('Only devs can use this command.')
+
+
+@tree.command(name='info', description='Sends infromation about the bot', guild=discord.Object(id=913678455223251004))
+async def self(interaction: discord.Interaction):
+    embed = discord.Embed(
+        title='Mirko Bot Komande',
+        description=' \n**-img**   \nšalje random sliku iz baze podataka \n\n  **-pong**  \n šalje Mirkov ping \n\n  **-dm user_id "poruka"**  \nšalje poruku u DM, ako nema id-a poruka se šalje pošiljatelju poruke \n\n  **-sun**  \n šalje podatke o trenutnoj Sunčevoj aktivnosti \n\n  **-moon**  \n šalje trenutnu osvjetljenost Mjeseca',
+        color=discord.Colour.red(),
+    )
+    embed.set_author(
+        name='Mirko Bot', icon_url='https://static.miraheze.org/hololivewiki/thumb/0/06/Album_Cover_Art_-_YoinoYoYoi.png/1200px-Album_Cover_Art_-_YoinoYoYoi.png')
+    embed.set_footer(text='For aditional information message @Helix#3958')
+    embed.set_thumbnail(
+        url=r'https://i.ibb.co/4TCmGnj/20220701-202610.png')
+    await interaction.response.send_message(embed=embed)
+
+
+@bot.event
+async def on_message(message):
+    if 'hvala' in message.content.lower() or 'thx' in message.content.lower():
+        await message.channel.send('Nema na čemu!')
+
+
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, discord.ext.commands.errors.CommandNotFound):
+        await ctx.send("Unknown command.")
 keep_alive()
-
-try:
-    client.run(token)
-except:
-    os.system("kill 1")
+bot.run("NzYwNTAzMTgzMTA0ODAyODM3.GZGNid.i0ULrbSsFUp2b5RmUfwMxZCwdwhv9PoywTrQEM")
