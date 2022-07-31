@@ -307,10 +307,10 @@ class mirko(discord.Client):
         await self.wait_until_ready()
         await asyncio.sleep(timer(hr=12))
 
-    @tasks.loop(seconds=30)
+    @tasks.loop(seconds=60)
     async def ch_pr(self):
         statuses = [
-            f"on {len(bot.guilds)} servers", "discord.py", '-info for help', 'anime'
+            f"on {len(bot.guilds)} servers", "discord.py", '/info for help', 'Anime'
         ]
         status = random.choice(statuses)
         act = discord.Game(name=status) if statuses.index(status) < 2 else discord.Activity(type=discord.ActivityType.watching,
@@ -331,7 +331,7 @@ async def self(interaction: discord.Interaction):
     await interaction.response.send_message(f'Pong! {round(bot.latency*1000)} ms')
 
 
-@tree.command(name='send', description='Sends a message to a channel [DEV ONLY]', guild=discord.Object(id=913678455223251004))
+@tree.command(name='send', description='Sends a message to a channel [DEV ONLY!]', guild=discord.Object(id=913678455223251004))
 async def self(interaction: discord.Interaction, channel: int, message: str):
     if interaction.user.id in devs:
         try:
@@ -361,7 +361,7 @@ async def self(interaction: discord.Interaction):
     await bot.get_channel(my_channel).send(embed=res[1])
 
 
-@tree.command(name='block', description='Blocks a user from using the bot [DEV ONLY]', guild=discord.Object(id=913678455223251004))
+@tree.command(name='block', description='Blocks a user from using the bot [DEV ONLY!]', guild=discord.Object(id=913678455223251004))
 async def self(interaction: discord.Interaction, user: discord.Member):
     if interaction.user.id in devs:
         try:
@@ -381,7 +381,7 @@ async def self(interaction: discord.Interaction, user: discord.Member):
         interaction.response.send_message('Only devs can use this command.')
 
 
-@tree.command(name='unblock', description='Unblocks a user from using the bot [DEV ONLY]', guild=discord.Object(id=913678455223251004))
+@tree.command(name='unblock', description='Unblocks a user from using the bot [DEV ONLY!]', guild=discord.Object(id=913678455223251004))
 async def self(interaction: discord.Interaction, user: discord.Member):
     if interaction.user.id in devs:
         try:
@@ -472,7 +472,7 @@ async def self(interaction: discord.Interaction):
                                             )
 
 
-@tree.command(name='quit', description='Shuts down the bot [DEV ONLY]', guild=discord.Object(id=913678455223251004))
+@tree.command(name='quit', description='Shuts down the bot [DEV ONLY!]', guild=discord.Object(id=913678455223251004))
 async def self(interaction: discord.Interaction):
     if interaction.user.id in devs:
         await interaction.response.send_message('Shutting down...')
@@ -481,7 +481,7 @@ async def self(interaction: discord.Interaction):
         await interaction.response.send_message('Only devs can use this command.')
 
 
-@tree.command(name='reboot', description='Restarts the bot [DEV ONLY]', guild=discord.Object(id=913678455223251004))
+@tree.command(name='reboot', description='Restarts the bot [DEV ONLY!]', guild=discord.Object(id=913678455223251004))
 async def self(interaction: discord.Interaction):
     if interaction.user.id in devs:
         f = open('database/reboot.txt', 'w')
