@@ -248,8 +248,11 @@ class mirko(discord.Client):
         self.synced = False
 
     async def on_ready(self):
-        await tree.sync(guild=discord.Object(id=913678455223251004))
-        self.synced = True
+        await self.wait_until_ready()
+        if not self.synced:
+            await tree.sync(guild=discord.Object(id=913678455223251004))
+            await tree.sync()
+            self.synced = True
         print(f"Logged in as {bot.user}")
         # await bot.change_presence(status=discord.Status.online, activity=discord.Game('discord.py'))
 
@@ -326,7 +329,8 @@ bot = mirko()
 tree = app_commands.CommandTree(bot)
 
 
-@tree.command(name='ping', description='Sends bot\'s ping', guild=discord.Object(id=913678455223251004))
+# , guild=discord.Object(id=913678455223251004))
+@tree.command(name='ping', description='Sends bot\'s ping')
 async def self(interaction: discord.Interaction):
     await interaction.response.send_message(f'Pong! {round(bot.latency*1000)} ms')
 
@@ -344,12 +348,12 @@ async def self(interaction: discord.Interaction, channel: int, message: str):
         interaction.response.send_message('Only devs can use this command.')
 
 
-@tree.command(name='sun', description='Sends Sun Status', guild=discord.Object(id=913678455223251004))
+@tree.command(name='sun', description='Sends Sun Status')
 async def self(interaction: discord.Interaction):
     await interaction.response.send_message(embed=sun_find())
 
 
-@tree.command(name='moon', description='Sends Moon Status', guild=discord.Object(id=913678455223251004))
+@tree.command(name='moon', description='Sends Moon Status')
 async def self(interaction: discord.Interaction):
     await interaction.response.send_message(embed=moon_find())
 
@@ -361,7 +365,7 @@ async def self(interaction: discord.Interaction):
     await bot.get_channel(my_channel).send(embed=res[1])
 
 
-@tree.command(name='block', description='Blocks a user from using the bot [DEV ONLY!]', guild=discord.Object(id=913678455223251004))
+@tree.command(name='block', description='Blocks a user from using the bot [DEV ONLY!]')
 async def self(interaction: discord.Interaction, user: discord.Member):
     if interaction.user.id in devs:
         try:
@@ -381,7 +385,7 @@ async def self(interaction: discord.Interaction, user: discord.Member):
         interaction.response.send_message('Only devs can use this command.')
 
 
-@tree.command(name='unblock', description='Unblocks a user from using the bot [DEV ONLY!]', guild=discord.Object(id=913678455223251004))
+@tree.command(name='unblock', description='Unblocks a user from using the bot [DEV ONLY!]')
 async def self(interaction: discord.Interaction, user: discord.Member):
     if interaction.user.id in devs:
         try:
@@ -407,7 +411,7 @@ async def self(interaction: discord.Interaction, user: discord.Member):
         interaction.response.send_message('Only devs can use this command.')
 
 
-@tree.command(name='subscribe', description='Subscribes a given/current channel', guild=discord.Object(id=913678455223251004))
+@tree.command(name='subscribe', description='Subscribes a given/current channel to the astro newsletter')
 async def self(interaction: discord.Interaction, channel: discord.TextChannel = None):
     if channel == None:
         cn_id = interaction.channel_id
@@ -427,7 +431,7 @@ async def self(interaction: discord.Interaction, channel: discord.TextChannel = 
         await interaction.response.send_message('Successfully subscribed!')
 
 
-@tree.command(name='unsubscribe', description='Unsubscribes a given/current channel', guild=discord.Object(id=913678455223251004))
+@tree.command(name='unsubscribe', description='Unsubscribes a given/current channel from the astro newsletter')
 async def self(interaction: discord.Interaction, channel: discord.TextChannel = None):
     if channel == None:
         cn_id = interaction.channel_id
@@ -447,7 +451,7 @@ async def self(interaction: discord.Interaction, channel: discord.TextChannel = 
         await interaction.response.send_message('This channel is already unsubscribed.')
 
 
-@tree.command(name='dm', description='DMs a given user/sender with a custom/random message', guild=discord.Object(id=913678455223251004))
+@tree.command(name='dm', description='DMs a given user/sender with a custom/random message')
 async def self(interaction: discord.Interaction, user: discord.User = None, message: str = None):
     if message == None:
         message = random.choice(dms)
@@ -463,7 +467,7 @@ async def self(interaction: discord.Interaction, user: discord.User = None, mess
     await interaction.response.send_message('Message sent.')
 
 
-@tree.command(name='img', description='Sends a random image from the database', guild=discord.Object(id=913678455223251004))
+@tree.command(name='img', description='Sends a random image from the database')
 async def self(interaction: discord.Interaction):
     imgs = os.listdir(r'database/images')
     # imgs.remove('mauro.png')
@@ -495,7 +499,7 @@ async def self(interaction: discord.Interaction):
         await interaction.response.send_message('Only devs can use this command.')
 
 
-@tree.command(name='dev_add', description='Marks a specific user as a bot\'s dev [DEV ONLY!]', guild=discord.Object(id=913678455223251004))
+@tree.command(name='dev_add', description='Marks a specific user as a bot\'s dev [DEV ONLY!]')
 async def self(interaction: discord.Interaction, user: discord.User):
     if interaction.user.id in devs:
         try:
@@ -515,7 +519,7 @@ async def self(interaction: discord.Interaction, user: discord.User):
         await interaction.response.send_message('Only devs can use this command.')
 
 
-@tree.command(name='dev_remove', description='Removes a specific user as a bot\'s dev [DEV ONLY!]', guild=discord.Object(id=913678455223251004))
+@tree.command(name='dev_remove', description='Removes a specific user as a bot\'s dev [DEV ONLY!]')
 async def self(interaction: discord.Interaction, user: discord.User):
     if interaction.user.id in devs:
         try:
@@ -540,7 +544,7 @@ async def self(interaction: discord.Interaction, user: discord.User):
         interaction.response.send_message('Only devs can use this command.')
 
 
-@tree.command(name='info', description='Sends information about the bot', guild=discord.Object(id=913678455223251004))
+@tree.command(name='info', description='Sends information about the bot')
 async def self(interaction: discord.Interaction):
     embed = discord.Embed(
         title='Mirko Bot Komande',
