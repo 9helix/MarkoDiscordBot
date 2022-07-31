@@ -323,7 +323,8 @@ class mirko(discord.Client):
     @ch_pr.before_loop
     async def before_ch_pr(self):
         await self.wait_until_ready()
-
+    async def on_command_error(self,ctx,error):
+        await ctx.replay(error,ephemeral=True)
 
 bot = mirko()
 tree = app_commands.CommandTree(bot)
