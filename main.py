@@ -1,15 +1,16 @@
-import discord
-from discord.ext import commands
-from discord import app_commands
-from discord.ext import tasks
-import random
-from bs4 import BeautifulSoup
-import requests
-from datetime import datetime, timedelta
+import asyncio
 import json
 import os
+import random
 import sys
-import asyncio
+from datetime import datetime, timedelta
+
+import discord
+import requests
+from bs4 import BeautifulSoup
+from discord import app_commands
+from discord.ext import commands, tasks
+
 from keep_alive import keep_alive
 
 bot = commands.Bot(command_prefix='-', intents=discord.Intents.all())
@@ -17,6 +18,12 @@ bot = commands.Bot(command_prefix='-', intents=discord.Intents.all())
 admin = int(os.environ['admin_id'])
 my_channel = int(os.environ['my_channel'])
 token = str(os.environ['token'])
+
+f = open('database/devs.txt', 'a+')
+f.seek(0)
+devs = [user[:-1] for user in f.readlines()]
+devs.append(admin)
+f.close()
 
 space = '<:space:988547133902819378>'
 ojou = '<:ojou:990313694204395540>'
@@ -326,7 +333,7 @@ async def self(interaction: discord.Interaction):
 
 @tree.command(name='send', description='Sends a message to a channel [DEV ONLY]', guild=discord.Object(id=913678455223251004))
 async def self(interaction: discord.Interaction, channel: int, message: str):
-    if interaction.user.id == admin:
+    if interaction.user.id in devs:
         try:
             channel = bot.get_channel(channel)
             await channel.send(message)
@@ -356,12 +363,13 @@ async def self(interaction: discord.Interaction):
 
 @tree.command(name='block', description='Blocks a user from using the bot [DEV ONLY]', guild=discord.Object(id=913678455223251004))
 async def self(interaction: discord.Interaction, user: discord.Member):
-    if interaction.user.id == admin:
+    if interaction.user.id in devs:
         try:
             #user = bot.get_user(user)
             f = open('database/blocked.txt', 'a+')
             f.seek(0)
             if str(user.id)+'\n' in f.readlines():
+                f.close()
                 await interaction.response.send_message('User already blocked.')
             else:
                 f.write(str(user.id) + '\n')
@@ -375,7 +383,7 @@ async def self(interaction: discord.Interaction, user: discord.Member):
 
 @tree.command(name='unblock', description='Unblocks a user from using the bot [DEV ONLY]', guild=discord.Object(id=913678455223251004))
 async def self(interaction: discord.Interaction, user: discord.Member):
-    if interaction.user.id == admin:
+    if interaction.user.id in devs:
         try:
             #user = bot.get_user(user)
             f = open('database/blocked.txt', 'a+')
@@ -466,7 +474,7 @@ async def self(interaction: discord.Interaction):
 
 @tree.command(name='quit', description='Shuts down the bot [DEV ONLY]', guild=discord.Object(id=913678455223251004))
 async def self(interaction: discord.Interaction):
-    if interaction.user.id == admin:
+    if interaction.user.id in devs:
         await interaction.response.send_message('Shutting down...')
         await bot.close()
     else:
@@ -475,7 +483,7 @@ async def self(interaction: discord.Interaction):
 
 @tree.command(name='reboot', description='Restarts the bot [DEV ONLY]', guild=discord.Object(id=913678455223251004))
 async def self(interaction: discord.Interaction):
-    if interaction.user.id == admin:
+    if interaction.user.id in devs:
         f = open('database/reboot.txt', 'w')
         f.write(str(interaction.channel_id))
         print(str(interaction.channel_id))
@@ -487,7 +495,52 @@ async def self(interaction: discord.Interaction):
         await interaction.response.send_message('Only devs can use this command.')
 
 
-@tree.command(name='info', description='Sends infromation about the bot', guild=discord.Object(id=913678455223251004))
+@tree.command(name='dev_add', description='Marks a specific user as a bot\'s dev [DEV ONLY!]', guild=discord.Object(id=913678455223251004))
+async def self(interaction: discord.Interaction, user: discord.User):
+    if interaction.user.id in devs:
+        try:
+            f = open('database/devs.txt', 'a+')
+            f.seek(0)
+            if str(user.id)+'\n' in f.readlines():
+                f.close()
+                await interaction.response.send_message(f'<@{user.id}> is already dev.')
+            else:
+                f.write(str(user.id) + '\n')
+                f.close()
+                await interaction.response.send_message(f'Successfully added user <@{user.id}> as a dev.')
+        except Exception as e:
+            # print(e)
+            await interaction.response.send_message('Unknown user.')
+    else:
+        await interaction.response.send_message('Only devs can use this command.')
+
+
+@tree.command(name='dev_remove', description='Removes a specific user as a bot\'s dev [DEV ONLY!]', guild=discord.Object(id=913678455223251004))
+async def self(interaction: discord.Interaction, user: discord.User):
+    if interaction.user.id in devs:
+        try:
+            f = open('database/devs.txt', 'a+')
+            f.seek(0)
+            lines = f.readlines()
+            f.close()
+            #print(lines, str(user.id)+'\n')
+            if str(user.id)+'\n' not in lines:
+                await interaction.response.send_message(f'User <@{user.id}> isn\'t dev.')
+            else:
+                f = open('database/blocked.txt', 'w')
+                for line in lines:
+                    if line != str(user.id) + '\n':
+                        f.write(line)
+                f.close()
+                await interaction.response.send_message(f'User <@{user.id}> removed as a dev.')
+        except Exception as e:
+            # print(e)
+            await interaction.response.send_message('Unknown user.')
+    else:
+        interaction.response.send_message('Only devs can use this command.')
+
+
+@tree.command(name='info', description='Sends information about the bot', guild=discord.Object(id=913678455223251004))
 async def self(interaction: discord.Interaction):
     embed = discord.Embed(
         title='Mirko Bot Komande',
@@ -496,7 +549,7 @@ async def self(interaction: discord.Interaction):
     )
     embed.set_author(
         name='Mirko Bot', icon_url='https://static.miraheze.org/hololivewiki/thumb/0/06/Album_Cover_Art_-_YoinoYoYoi.png/1200px-Album_Cover_Art_-_YoinoYoYoi.png')
-    embed.set_footer(text='For aditional information message Helix#3958')
+    embed.set_footer(text='For aditional information message Helix#3958.')
     embed.set_thumbnail(
         url=r'https://i.ibb.co/4TCmGnj/20220701-202610.png')
     await interaction.response.send_message(embed=embed)
