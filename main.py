@@ -329,7 +329,7 @@ class mirko(discord.Client):
         act = discord.Game(
             name=status) if statuses.index(status) < 2 else discord.Activity(
                 type=discord.ActivityType.watching, name=status
-            ) if statuses.index(status) == 3 else discord.Activity(
+        ) if statuses.index(status) == 3 else discord.Activity(
                 type=discord.ActivityType.listening, name=status)
         await bot.change_presence(status=discord.Status.online, activity=act)
 
@@ -342,9 +342,8 @@ class mirko(discord.Client):
 
 
 class Menu(discord.ui.View):
-    def __init__(self):
-        super().__init__()
-        self.value = None
+    def __init__(self) -> None:
+        super().__init__(timeout=None)
 
     @discord.ui.button(label='Moon', style=discord.ButtonStyle.blurple)
     async def menu1(self, button: discord.ui.Button,
@@ -361,7 +360,12 @@ bot = mirko()
 tree = app_commands.CommandTree(bot)
 
 
+@tree.command(name='menu', description='test menu', guild=discord.Object(id=913678455223251004))
+async def button(interaction: discord.Interaction):
+    await interaction.response.send_message(view=Menu())
 # , guild=discord.Object(id=913678455223251004))
+
+
 @tree.command(name='ping', description='Sends bot\'s ping')
 async def self(interaction: discord.Interaction):
     await interaction.response.send_message(
@@ -618,14 +622,12 @@ async def self(interaction: discord.Interaction, user: discord.User):
 async def self(interaction: discord.Interaction):
     embed = discord.Embed(
         title='Mirko Bot Komande',
-        description=
-        ' \n**-img**   \nšalje random sliku iz baze podataka \n\n  **-pong**  \n šalje Mirkov ping \n\n  **-dm user_id "poruka"**  \nšalje poruku u DM, ako nema id-a poruka se šalje pošiljatelju poruke \n\n  **-sun**  \n šalje podatke o trenutnoj Sunčevoj aktivnosti \n\n  **-moon**  \n šalje trenutnu osvjetljenost Mjeseca',
+        description=' \n**-img**   \nšalje random sliku iz baze podataka \n\n  **-pong**  \n šalje Mirkov ping \n\n  **-dm user_id "poruka"**  \nšalje poruku u DM, ako nema id-a poruka se šalje pošiljatelju poruke \n\n  **-sun**  \n šalje podatke o trenutnoj Sunčevoj aktivnosti \n\n  **-moon**  \n šalje trenutnu osvjetljenost Mjeseca',
         color=discord.Colour.red(),
     )
     embed.set_author(
         name='Mirko Bot',
-        icon_url=
-        'https://static.miraheze.org/hololivewiki/thumb/0/06/Album_Cover_Art_-_YoinoYoYoi.png/1200px-Album_Cover_Art_-_YoinoYoYoi.png'
+        icon_url='https://static.miraheze.org/hololivewiki/thumb/0/06/Album_Cover_Art_-_YoinoYoYoi.png/1200px-Album_Cover_Art_-_YoinoYoYoi.png'
     )
     embed.set_footer(text='For aditional information message Helix#3958.')
     embed.set_thumbnail(url=r'https://i.ibb.co/4TCmGnj/20220701-202610.png')
