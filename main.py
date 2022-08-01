@@ -35,7 +35,9 @@ respond = ['Nema na čemu!', 'Np']
 def price_checker():
     url = "https://www.links.hr/hr/monitor-23-8-aoc-24g2u-fhd-ips-144hz-1ms-250cd-m2-80-000-000-1-zvucnici-crni-100300456"
     headers = {
-        'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36"}
+        'User-Agent':
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36"
+    }
 
     page = requests.get(url, headers=headers)
     soup = BeautifulSoup(page.content, 'html.parser')
@@ -43,39 +45,41 @@ def price_checker():
     with open('database/price_log.txt') as f:
         l = f.readlines()
         if l != []:
-            line = l[len(l)-1]
-            last_price = line[:len(line)-1]
+            line = l[len(l) - 1]
+            last_price = line[:len(line) - 1]
         else:
             last_price = '0,00 kn'
-    price = soup.find(
-        'span', {'class': 'price-value-94695'}).get_text().strip()
+    price = soup.find('span', {
+        'class': 'price-value-94695'
+    }).get_text().strip()
     name = soup.find('h1', itemprop="name").get_text().strip()
 
-    price = price[:len(price)-5]+','+price[len(price)-5:]
-    value = float(price.replace(',', '.').replace(
-        '.', '', 1)[:len(price)-3])
-    last_value = float(last_price.replace(
-        ',', '.').replace('.', '', 1)[:len(last_price)-3])
+    price = price[:len(price) - 5] + ',' + price[len(price) - 5:]
+    value = float(price.replace(',', '.').replace('.', '', 1)[:len(price) - 3])
+    last_value = float(
+        last_price.replace(',', '.').replace('.', '', 1)[:len(last_price) - 3])
 
     if value < last_value:
         result = f'Price decreased! Before: **{last_price}** Now: **{price}**'
         print(result)
         f = open('database/price_log.txt', 'a')
-        f.write(str(price)+'\n')
+        f.write(str(price) + '\n')
         f.close()
     elif value > last_value:
         f = open('database/price_log.txt', 'a')
-        f.write(str(price)+'\n')
+        f.write(str(price) + '\n')
         f.close()
         result = f'Price increased! Before: **{last_price} Now: **{price}**'
         print(result)
     else:
         result = f'Price unchanged! **{price}**'
         print(result)
-    rijeka = soup.find('a', {'href': '/hr/links-rijeka'}
-                       ).parent.find_next_siblings('td')
-    web = soup.find('td', {'class': 'warehouse'},
-                    string=' WEBSHOP').find_next_siblings('td')
+    rijeka = soup.find('a', {
+        'href': '/hr/links-rijeka'
+    }).parent.find_next_siblings('td')
+    web = soup.find('td', {
+        'class': 'warehouse'
+    }, string=' WEBSHOP').find_next_siblings('td')
     for i in rijeka:
         i = BeautifulSoup(str(i), 'html.parser')
 
@@ -101,8 +105,10 @@ def price_checker():
             break
     # print(we)
     # print(ri)
-    embed = discord.Embed(
-        title=name, url=url, color=discord.Colour.teal(), description=result+'\n'+we+'\n'+ri)
+    embed = discord.Embed(title=name,
+                          url=url,
+                          color=discord.Colour.teal(),
+                          description=result + '\n' + we + '\n' + ri)
     embed.set_thumbnail(url='https://i.ibb.co/HTf39nf/tag.png')
 
     url = "https://edigital.hr/monitor/aoc-24g2u-fullhd-ips-144hz-gamer-led-monitor-p691923"
@@ -116,11 +122,13 @@ def price_checker():
         if stat.get_text() == 'na zalihi':
             stat = ':green_circle: na zalihi'
         else:
-            stat = ':orange_circle:'+stat.get_text()
+            stat = ':orange_circle:' + stat.get_text()
     else:
         stat = ':red_circle: nije više dobavljiv'
-    embed2 = discord.Embed(
-        title=name, url=url, color=discord.Colour.teal(), description=f'**{price}**\n{stat}')
+    embed2 = discord.Embed(title=name,
+                           url=url,
+                           color=discord.Colour.teal(),
+                           description=f'**{price}**\n{stat}')
     embed2.set_thumbnail(url='https://i.ibb.co/HTf39nf/tag.png')
     return embed, embed2
 
@@ -129,7 +137,7 @@ def timer(hr, min=0, days=0):
     now = datetime.now()
     start = timedelta(hours=now.hour, minutes=now.minute, seconds=now.second)
     end = timedelta(hours=hr, minutes=min)
-    delta = (end - start).seconds+days*3600*24
+    delta = (end - start).seconds + days * 3600 * 24
     return delta
 
 
@@ -162,7 +170,8 @@ def sun_find():
     #payload = {}
     headers = {
         # 'PostmanRuntime/7.29.0',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36',
+        'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36',
         'Accept': '*/*',
         'Cache-Control': 'no-cache',
         'Host': 'www.spaceweatherlive.com',
@@ -235,7 +244,7 @@ def moon_find():
     elif 'Third' in parent:
         status = 'Third Quarter.'
     data = f"Moon's brightness: {faza}\n{status}"
-    embed = discord.Embed(title='Moon Status',
+    embed = discord.Embed(title='Moon\'s Phase',
                           description=data,
                           color=discord.Colour.blue())
     embed.set_thumbnail(url=r'https://i.imgur.com/CH7vNHi.png')
@@ -313,18 +322,40 @@ class mirko(discord.Client):
     @tasks.loop(seconds=60)
     async def ch_pr(self):
         statuses = [
-            f"on {len(bot.guilds)} servers", "discord.py", '/info for help', 'Anime'
+            f"on {len(bot.guilds)} servers", "discord.py", '/info for help',
+            'Anime'
         ]
         status = random.choice(statuses)
-        act = discord.Game(name=status) if statuses.index(status) < 2 else discord.Activity(type=discord.ActivityType.watching,
-                                                                                            name=status) if statuses.index(status) == 3 else discord.Activity(type=discord.ActivityType.listening, name=status)
+        act = discord.Game(
+            name=status) if statuses.index(status) < 2 else discord.Activity(
+                type=discord.ActivityType.watching, name=status
+            ) if statuses.index(status) == 3 else discord.Activity(
+                type=discord.ActivityType.listening, name=status)
         await bot.change_presence(status=discord.Status.online, activity=act)
 
     @ch_pr.before_loop
     async def before_ch_pr(self):
         await self.wait_until_ready()
-    async def on_command_error(self,ctx,error):
-        await ctx.replay(error,ephemeral=True)
+
+    async def on_command_error(self, ctx, error):
+        await ctx.replay(error, ephemeral=True)
+
+
+class Menu(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.value = None
+
+    @discord.ui.button(label='Moon', style=discord.ButtonStyle.blurple)
+    async def menu1(self, button: discord.ui.Button,
+                    interaction: discord.Interaction):
+        await interaction.response.edit_message(embed=moon_find())
+
+    @discord.ui.button(label='Sun', style=discord.ButtonStyle.red)
+    async def menu1(self, button: discord.ui.Button,
+                    interaction: discord.Interaction):
+        await interaction.response.edit_message(embed=sun_find())
+
 
 bot = mirko()
 tree = app_commands.CommandTree(bot)
@@ -333,10 +364,13 @@ tree = app_commands.CommandTree(bot)
 # , guild=discord.Object(id=913678455223251004))
 @tree.command(name='ping', description='Sends bot\'s ping')
 async def self(interaction: discord.Interaction):
-    await interaction.response.send_message(f'Pong! {round(bot.latency*1000)} ms')
+    await interaction.response.send_message(
+        f'Pong! {round(bot.latency*1000)} ms')
 
 
-@tree.command(name='send', description='Sends a message to a channel [DEV ONLY!]', guild=discord.Object(id=913678455223251004))
+@tree.command(name='send',
+              description='Sends a message to a channel [DEV ONLY!]',
+              guild=discord.Object(id=913678455223251004))
 async def self(interaction: discord.Interaction, channel: int, message: str):
     if interaction.user.id in devs:
         try:
@@ -344,49 +378,55 @@ async def self(interaction: discord.Interaction, channel: int, message: str):
             await channel.send(message)
             await interaction.response.send_message('Message sent.')
         except:
-            await interaction.response.send_message('Unknyown channel.')
+            await interaction.response.send_message('Unknown channel.')
     else:
         interaction.response.send_message('Only devs can use this command.')
 
 
-@tree.command(name='sun', description='Sends Sun Status')
+@tree.command(name='sun', description='Sends Sun\'s Activity')
 async def self(interaction: discord.Interaction):
     await interaction.response.send_message(embed=sun_find())
 
 
-@tree.command(name='moon', description='Sends Moon Status')
+@tree.command(name='moon', description='Sends Moon\'s Phase')
 async def self(interaction: discord.Interaction):
     await interaction.response.send_message(embed=moon_find())
 
 
-@tree.command(name='price', description='Sends product\'s current price', guild=discord.Object(id=913678455223251004))
+@tree.command(name='price',
+              description='Sends product\'s current price',
+              guild=discord.Object(id=913678455223251004))
 async def self(interaction: discord.Interaction):
     res = price_checker()
     await bot.get_channel(my_channel).send(embed=res[0])
     await bot.get_channel(my_channel).send(embed=res[1])
 
 
-@tree.command(name='block', description='Blocks a user from using the bot [DEV ONLY!]')
+@tree.command(name='block',
+              description='Blocks a user from using the bot [DEV ONLY!]')
 async def self(interaction: discord.Interaction, user: discord.Member):
     if interaction.user.id in devs:
         try:
             #user = bot.get_user(user)
             f = open('database/blocked.txt', 'a+')
             f.seek(0)
-            if str(user.id)+'\n' in f.readlines():
+            if str(user.id) + '\n' in f.readlines():
                 f.close()
-                await interaction.response.send_message('User already blocked.')
+                await interaction.response.send_message('User already blocked.'
+                                                        )
             else:
                 f.write(str(user.id) + '\n')
                 f.close()
-                await interaction.response.send_message(f'User <@{user.id}> blocked.')
+                await interaction.response.send_message(
+                    f'User <@{user.id}> blocked.')
         except:
             await interaction.response.send_message('Unknown user.')
     else:
         interaction.response.send_message('Only devs can use this command.')
 
 
-@tree.command(name='unblock', description='Unblocks a user from using the bot [DEV ONLY!]')
+@tree.command(name='unblock',
+              description='Unblocks a user from using the bot [DEV ONLY!]')
 async def self(interaction: discord.Interaction, user: discord.Member):
     if interaction.user.id in devs:
         try:
@@ -396,15 +436,17 @@ async def self(interaction: discord.Interaction, user: discord.Member):
             lines = f.readlines()
             f.close()
             #print(lines, str(user.id)+'\n')
-            if str(user.id)+'\n' not in lines:
-                await interaction.response.send_message(f'User <@{user.id}> is already unblocked.')
+            if str(user.id) + '\n' not in lines:
+                await interaction.response.send_message(
+                    f'User <@{user.id}> is already unblocked.')
             else:
                 f = open('database/blocked.txt', 'w')
                 for line in lines:
                     if line != str(user.id) + '\n':
                         f.write(line)
                 f.close()
-                await interaction.response.send_message(f'User <@{user.id}> unblocked.')
+                await interaction.response.send_message(
+                    f'User <@{user.id}> unblocked.')
         except Exception as e:
             # print(e)
             await interaction.response.send_message('Unknown user.')
@@ -412,8 +454,11 @@ async def self(interaction: discord.Interaction, user: discord.Member):
         interaction.response.send_message('Only devs can use this command.')
 
 
-@tree.command(name='subscribe', description='Subscribes a given/current channel to the astro newsletter')
-async def self(interaction: discord.Interaction, channel: discord.TextChannel = None):
+@tree.command(
+    name='subscribe',
+    description='Subscribes a given/current channel to the astro newsletter')
+async def self(interaction: discord.Interaction,
+               channel: discord.TextChannel = None):
     if channel == None:
         cn_id = interaction.channel_id
     else:
@@ -423,7 +468,8 @@ async def self(interaction: discord.Interaction, channel: discord.TextChannel = 
     f.close()
 
     if str(cn_id) + '\n' in subbed:
-        await interaction.response.send_message('This channel is already subscribed.')
+        await interaction.response.send_message(
+            'This channel is already subscribed.')
     else:
         f = open('database/subbed_ch.txt', 'a')
         f.write(str(cn_id) + '\n')
@@ -432,8 +478,12 @@ async def self(interaction: discord.Interaction, channel: discord.TextChannel = 
         await interaction.response.send_message('Successfully subscribed!')
 
 
-@tree.command(name='unsubscribe', description='Unsubscribes a given/current channel from the astro newsletter')
-async def self(interaction: discord.Interaction, channel: discord.TextChannel = None):
+@tree.command(
+    name='unsubscribe',
+    description='Unsubscribes a given/current channel from the astro newsletter'
+)
+async def self(interaction: discord.Interaction,
+               channel: discord.TextChannel = None):
     if channel == None:
         cn_id = interaction.channel_id
     else:
@@ -449,11 +499,16 @@ async def self(interaction: discord.Interaction, channel: discord.TextChannel = 
         f.close()
         await interaction.response.send_message('Successfully unsubscribed!')
     else:
-        await interaction.response.send_message('This channel is already unsubscribed.')
+        await interaction.response.send_message(
+            'This channel is already unsubscribed.')
 
 
-@tree.command(name='dm', description='DMs a given user/sender with a custom/random message')
-async def self(interaction: discord.Interaction, user: discord.User = None, message: str = None):
+@tree.command(
+    name='dm',
+    description='DMs a given user/sender with a custom/random message')
+async def self(interaction: discord.Interaction,
+               user: discord.User = None,
+               message: str = None):
     if message == None:
         message = random.choice(dms)
     if user == None:
@@ -473,20 +528,25 @@ async def self(interaction: discord.Interaction):
     imgs = os.listdir(r'database/images')
     # imgs.remove('mauro.png')
     # imgs.remove('therock.gif')
-    await interaction.response.send_message(file=discord.File(rf'database/images/{random.choice(imgs)}')
-                                            )
+    await interaction.response.send_message(
+        file=discord.File(rf'database/images/{random.choice(imgs)}'))
 
 
-@tree.command(name='quit', description='Shuts down the bot [DEV ONLY!]', guild=discord.Object(id=913678455223251004))
+@tree.command(name='quit',
+              description='Shuts down the bot [DEV ONLY!]',
+              guild=discord.Object(id=913678455223251004))
 async def self(interaction: discord.Interaction):
     if interaction.user.id in devs:
         await interaction.response.send_message('Shutting down...')
         await bot.close()
     else:
-        await interaction.response.send_message('Only devs can use this command.')
+        await interaction.response.send_message(
+            'Only devs can use this command.')
 
 
-@tree.command(name='reboot', description='Restarts the bot [DEV ONLY!]', guild=discord.Object(id=913678455223251004))
+@tree.command(name='reboot',
+              description='Restarts the bot [DEV ONLY!]',
+              guild=discord.Object(id=913678455223251004))
 async def self(interaction: discord.Interaction):
     if interaction.user.id in devs:
         f = open('database/reboot.txt', 'w')
@@ -497,30 +557,37 @@ async def self(interaction: discord.Interaction):
         os.system("clear")
         os.execv(sys.executable, ['python'] + sys.argv)
     else:
-        await interaction.response.send_message('Only devs can use this command.')
+        await interaction.response.send_message(
+            'Only devs can use this command.')
 
 
-@tree.command(name='dev_add', description='Marks a specific user as a bot\'s dev [DEV ONLY!]')
+@tree.command(name='dev_add',
+              description='Marks a specific user as a bot\'s dev [DEV ONLY!]')
 async def self(interaction: discord.Interaction, user: discord.User):
     if interaction.user.id in devs:
         try:
             f = open('database/devs.txt', 'a+')
             f.seek(0)
-            if str(user.id)+'\n' in f.readlines():
+            if str(user.id) + '\n' in f.readlines():
                 f.close()
-                await interaction.response.send_message(f'<@{user.id}> is already dev.')
+                await interaction.response.send_message(
+                    f'<@{user.id}> is already dev.')
             else:
                 f.write(str(user.id) + '\n')
                 f.close()
-                await interaction.response.send_message(f'Successfully added user <@{user.id}> as a dev.')
+                await interaction.response.send_message(
+                    f'Successfully added user <@{user.id}> as a dev.')
         except Exception as e:
             # print(e)
             await interaction.response.send_message('Unknown user.')
     else:
-        await interaction.response.send_message('Only devs can use this command.')
+        await interaction.response.send_message(
+            'Only devs can use this command.')
 
 
-@tree.command(name='dev_remove', description='Removes a specific user as a bot\'s dev [DEV ONLY!]')
+@tree.command(name='dev_remove',
+              description='Removes a specific user as a bot\'s dev [DEV ONLY!]'
+              )
 async def self(interaction: discord.Interaction, user: discord.User):
     if interaction.user.id in devs:
         try:
@@ -529,15 +596,17 @@ async def self(interaction: discord.Interaction, user: discord.User):
             lines = f.readlines()
             f.close()
             #print(lines, str(user.id)+'\n')
-            if str(user.id)+'\n' not in lines:
-                await interaction.response.send_message(f'User <@{user.id}> isn\'t dev.')
+            if str(user.id) + '\n' not in lines:
+                await interaction.response.send_message(
+                    f'User <@{user.id}> isn\'t dev.')
             else:
                 f = open('database/blocked.txt', 'w')
                 for line in lines:
                     if line != str(user.id) + '\n':
                         f.write(line)
                 f.close()
-                await interaction.response.send_message(f'User <@{user.id}> removed as a dev.')
+                await interaction.response.send_message(
+                    f'User <@{user.id}> removed as a dev.')
         except Exception as e:
             # print(e)
             await interaction.response.send_message('Unknown user.')
@@ -549,14 +618,17 @@ async def self(interaction: discord.Interaction, user: discord.User):
 async def self(interaction: discord.Interaction):
     embed = discord.Embed(
         title='Mirko Bot Komande',
-        description=' \n**-img**   \nšalje random sliku iz baze podataka \n\n  **-pong**  \n šalje Mirkov ping \n\n  **-dm user_id "poruka"**  \nšalje poruku u DM, ako nema id-a poruka se šalje pošiljatelju poruke \n\n  **-sun**  \n šalje podatke o trenutnoj Sunčevoj aktivnosti \n\n  **-moon**  \n šalje trenutnu osvjetljenost Mjeseca',
+        description=
+        ' \n**-img**   \nšalje random sliku iz baze podataka \n\n  **-pong**  \n šalje Mirkov ping \n\n  **-dm user_id "poruka"**  \nšalje poruku u DM, ako nema id-a poruka se šalje pošiljatelju poruke \n\n  **-sun**  \n šalje podatke o trenutnoj Sunčevoj aktivnosti \n\n  **-moon**  \n šalje trenutnu osvjetljenost Mjeseca',
         color=discord.Colour.red(),
     )
     embed.set_author(
-        name='Mirko Bot', icon_url='https://static.miraheze.org/hololivewiki/thumb/0/06/Album_Cover_Art_-_YoinoYoYoi.png/1200px-Album_Cover_Art_-_YoinoYoYoi.png')
+        name='Mirko Bot',
+        icon_url=
+        'https://static.miraheze.org/hololivewiki/thumb/0/06/Album_Cover_Art_-_YoinoYoYoi.png/1200px-Album_Cover_Art_-_YoinoYoYoi.png'
+    )
     embed.set_footer(text='For aditional information message Helix#3958.')
-    embed.set_thumbnail(
-        url=r'https://i.ibb.co/4TCmGnj/20220701-202610.png')
+    embed.set_thumbnail(url=r'https://i.ibb.co/4TCmGnj/20220701-202610.png')
     await interaction.response.send_message(embed=embed)
 
 
@@ -570,5 +642,7 @@ async def on_message(message):
 async def on_command_error(ctx, error):
     if isinstance(error, discord.ext.commands.errors.CommandNotFound):
         await ctx.send("Unknown command.")
+
+
 keep_alive()
 bot.run(token)
