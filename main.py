@@ -351,7 +351,7 @@ class Menu(discord.ui.View):
         await interaction.response.edit_message(embed=moon_find())
 
     @discord.ui.button(label='Sun', style=discord.ButtonStyle.red)
-    async def menu1(self, button: discord.ui.Button,
+    async def menu2(self, button: discord.ui.Button,
                     interaction: discord.Interaction):
         await interaction.response.edit_message(embed=sun_find())
 
