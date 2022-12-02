@@ -178,11 +178,12 @@ class Shard:
         self._cancel_task()
         self._dispatch('disconnect')
         self._dispatch('shard_disconnect', self.id)
-        _log.info('Got a request to %s the websocket at Shard ID %s.', exc.op, self.id)
+        _log.debug('Got a request to %s the websocket at Shard ID %s.', exc.op, self.id)
         try:
             coro = DiscordWebSocket.from_client(
                 self._client,
                 resume=exc.resume,
+                gateway=None if not exc.resume else self.ws.gateway,
                 shard_id=self.id,
                 session=self.ws.session_id,
                 sequence=self.ws.sequence,
@@ -471,12 +472,7 @@ class AutoShardedClient(Client):
             return
 
         self._closed = True
-
-        for vc in self.voice_clients:
-            try:
-                await vc.disconnect(force=True)
-            except Exception:
-                pass
+        await self._connection.close()
 
         to_close = [asyncio.ensure_future(shard.close(), loop=self.loop) for shard in self.__shards.values()]
         if to_close:

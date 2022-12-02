@@ -471,6 +471,8 @@ class GuildChannel:
 
                 if isinstance(target, Role):
                     payload['type'] = _Overwrites.ROLE
+                elif isinstance(target, Object):
+                    payload['type'] = _Overwrites.ROLE if target.type is Role else _Overwrites.MEMBER
                 else:
                     payload['type'] = _Overwrites.MEMBER
 
@@ -548,14 +550,13 @@ class GuildChannel:
         """:class:`datetime.datetime`: Returns the channel's creation time in UTC."""
         return utils.snowflake_time(self.id)
 
-    def overwrites_for(self, obj: Union[Role, User]) -> PermissionOverwrite:
+    def overwrites_for(self, obj: Union[Role, User, Object]) -> PermissionOverwrite:
         """Returns the channel-specific overwrites for a member or a role.
 
         Parameters
         -----------
-        obj: Union[:class:`~discord.Role`, :class:`~discord.abc.User`]
-            The role or user denoting
-            whose overwrite to get.
+        obj: Union[:class:`~discord.Role`, :class:`~discord.abc.User`, :class:`~discord.Object`]
+            The role or user denoting whose overwrite to get.
 
         Returns
         ---------
@@ -579,16 +580,19 @@ class GuildChannel:
         return PermissionOverwrite()
 
     @property
-    def overwrites(self) -> Dict[Union[Role, Member], PermissionOverwrite]:
+    def overwrites(self) -> Dict[Union[Role, Member, Object], PermissionOverwrite]:
         """Returns all of the channel's overwrites.
 
         This is returned as a dictionary where the key contains the target which
         can be either a :class:`~discord.Role` or a :class:`~discord.Member` and the value is the
         overwrite as a :class:`~discord.PermissionOverwrite`.
 
+        .. versionchanged:: 2.0
+            Overwrites can now be type-aware :class:`~discord.Object` in case of cache lookup failure
+
         Returns
         --------
-        Dict[Union[:class:`~discord.Role`, :class:`~discord.Member`], :class:`~discord.PermissionOverwrite`]
+        Dict[Union[:class:`~discord.Role`, :class:`~discord.Member`, :class:`~discord.Object`], :class:`~discord.PermissionOverwrite`]
             The channel's permission overwrites.
         """
         ret = {}
@@ -603,13 +607,11 @@ class GuildChannel:
             elif ow.is_member():
                 target = self.guild.get_member(ow.id)
 
-            # TODO: There is potential data loss here in the non-chunked
-            # case, i.e. target is None because get_member returned nothing.
-            # This can be fixed with a slight breaking change to the return type,
-            # i.e. adding discord.Object to the list of it
-            # However, for now this is an acceptable compromise.
-            if target is not None:
-                ret[target] = overwrite
+            if target is None:
+                target_type = Role if ow.is_role() else User
+                target = Object(id=ow.id, type=target_type)  # type: ignore
+
+            ret[target] = overwrite
         return ret
 
     @property
@@ -1696,7 +1698,7 @@ class Messageable:
             The message with the message data parsed.
         """
 
-        async def _around_strategy(retrieve, around, limit):
+        async def _around_strategy(retrieve: int, around: Optional[Snowflake], limit: Optional[int]):
             if not around:
                 return []
 
@@ -1705,7 +1707,7 @@ class Messageable:
 
             return data, None, limit
 
-        async def _after_strategy(retrieve, after, limit):
+        async def _after_strategy(retrieve: int, after: Optional[Snowflake], limit: Optional[int]):
             after_id = after.id if after else None
             data = await self._state.http.logs_from(channel.id, retrieve, after=after_id)
 
@@ -1717,7 +1719,7 @@ class Messageable:
 
             return data, after, limit
 
-        async def _before_strategy(retrieve, before, limit):
+        async def _before_strategy(retrieve: int, before: Optional[Snowflake], limit: Optional[int]):
             before_id = before.id if before else None
             data = await self._state.http.logs_from(channel.id, retrieve, before=before_id)
 
