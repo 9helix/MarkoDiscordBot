@@ -13,6 +13,7 @@ from discord.ext import commands, tasks
 
 from keep_alive import keep_alive
 
+
 bot = commands.Bot(command_prefix='-', intents=discord.Intents.all())
 
 admin = int(os.environ['admin_id'])

@@ -312,6 +312,14 @@ idna = ">=2.0"
 multidict = ">=4.0"
 
 [[package]]
+name = "youtube-dl"
+version = "2021.12.17"
+description = "YouTube video downloader"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "zipp"
 version = "3.8.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
@@ -326,7 +334,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8.0,<3.9"
-content-hash = "77b7edd8f10331fd80d654be15a4da631c9e53c5fd1426e879ca009e32afaaa8"
+content-hash = "2836a14905fe45b2f4a67ae1a56e9576a403c9db746faf6fe9b9cd57a00472a5"
 
 [metadata.files]
 aiohttp = []
@@ -356,4 +364,5 @@ typing-extensions = []
 urllib3 = []
 werkzeug = []
 yarl = []
+youtube-dl = []
 zipp = []
