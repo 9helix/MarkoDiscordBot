@@ -28,109 +28,8 @@ f.close()
 space = '<:space:988547133902819378>'
 ojou = '<:ojou:990313694204395540>'
 
-dms = ['bok', 'yo', 'waddup', 'di si', 'rock']
+dms = ['bok', 'yo', 'di si', 'rock']
 respond = ['Nema na čemu!', 'Np']
-
-
-def price_checker():
-    url = "https://www.links.hr/hr/monitor-23-8-aoc-24g2u-fhd-ips-144hz-1ms-250cd-m2-80-000-000-1-zvucnici-crni-100300456"
-    headers = {
-        'User-Agent':
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36"
-    }
-
-    page = requests.get(url, headers=headers)
-    soup = BeautifulSoup(page.content, 'html.parser')
-
-    with open('database/price_log.txt') as f:
-        l = f.readlines()
-        if l != []:
-            line = l[len(l) - 1]
-            last_price = line[:len(line) - 1]
-        else:
-            last_price = '0,00 kn'
-    price = soup.find('span', {
-        'class': 'price-value-94695'
-    }).get_text().strip()
-    name = soup.find('h1', itemprop="name").get_text().strip()
-
-    price = price[:len(price) - 5] + ',' + price[len(price) - 5:]
-    value = float(price.replace(',', '.').replace('.', '', 1)[:len(price) - 3])
-    last_value = float(
-        last_price.replace(',', '.').replace('.', '', 1)[:len(last_price) - 3])
-
-    if value < last_value:
-        result = f'Price decreased! Before: **{last_price}** Now: **{price}**'
-        print(result)
-        f = open('database/price_log.txt', 'a')
-        f.write(str(price) + '\n')
-        f.close()
-    elif value > last_value:
-        f = open('database/price_log.txt', 'a')
-        f.write(str(price) + '\n')
-        f.close()
-        result = f'Price increased! Before: **{last_price} Now: **{price}**'
-        print(result)
-    else:
-        result = f'Price unchanged! **{price}**'
-        print(result)
-    rijeka = soup.find('a', {
-        'href': '/hr/links-rijeka'
-    }).parent.find_next_siblings('td')
-    web = soup.find('td', {
-        'class': 'warehouse'
-    }, string=' WEBSHOP').find_next_siblings('td')
-    for i in rijeka:
-        i = BeautifulSoup(str(i), 'html.parser')
-
-        if i.find('span', {'class': 'circle active'}) != None:
-            ri = f'RIJEKA{space*1}'
-            if i.find('td', {'class': 'warehouseAvailable'}) != None:
-                ri += f':green_circle:{space*1}**AVAILABLE**'
-            elif i.find('td', {'class': 'warehouseOnRequest'}) != None:
-                ri += f':orange_circle:{space*1}**ON REQUEST**'
-            elif i.find('td', {'class': 'warehouseNotAvailable'}) != None:
-                ri += f':red_circle:{space*1}**NOT AVAILABLE**'
-            break
-    for i in web:
-        i = BeautifulSoup(str(i), 'html.parser')
-        if i.find('span', {'class': 'circle active'}) != None:
-            we = f'WEBSHOP{space*1}'
-            if i.find('td', {'class': 'warehouseAvailable'}) != None:
-                we += f':green_circle:{space*1}**AVAILABLE**'
-            elif i.find('td', {'class': 'warehouseOnRequest'}) != None:
-                we += f':orange_circle:{space*1}**ON REQUEST**'
-            elif i.find('td', {'class': 'warehouseNotAvailable'}) != None:
-                we += f':red_circle:{space*1}**NOT AVAILABLE**'
-            break
-    # print(we)
-    # print(ri)
-    embed = discord.Embed(title=name,
-                          url=url,
-                          color=discord.Colour.teal(),
-                          description=result + '\n' + we + '\n' + ri)
-    embed.set_thumbnail(url='https://i.ibb.co/HTf39nf/tag.png')
-
-    url = "https://edigital.hr/monitor/aoc-24g2u-fullhd-ips-144hz-gamer-led-monitor-p691923"
-    page = requests.get(url, headers=headers)
-    soup = BeautifulSoup(page.content, 'html.parser')
-
-    price = soup.find('strong', {'class': 'price price--large'}).get_text()
-    stat = soup.find('span', {'class': 'stock-info__text'})
-    name = soup.find('h1', {'class': 'main-title'}).get_text()
-    if stat != None:
-        if stat.get_text() == 'na zalihi':
-            stat = ':green_circle: na zalihi'
-        else:
-            stat = ':orange_circle:' + stat.get_text()
-    else:
-        stat = ':red_circle: nije više dobavljiv'
-    embed2 = discord.Embed(title=name,
-                           url=url,
-                           color=discord.Colour.teal(),
-                           description=f'**{price}**\n{stat}')
-    embed2.set_thumbnail(url='https://i.ibb.co/HTf39nf/tag.png')
-    return embed, embed2
 
 
 def timer(hr, min=0, days=0):
@@ -283,24 +182,6 @@ class mirko(discord.Client):
         else:
             f.close()
 
-    @tasks.loop(seconds=timer(hr=9, days=1))
-    async def price_newsletter(self):
-
-        f = open('database/subbed_ch.txt', 'r')
-        subbed = f.readlines()
-        f.close()
-
-        for cn in subbed:
-            cn = int(cn[:len(cn) - 1])
-            await bot.get_channel(cn).send(embed=moon_find())
-
-            await bot.get_channel(cn).send(embed=sun_find())
-
-    @price_newsletter.before_loop
-    async def before_price_newsletter(self):
-        await self.wait_until_ready()
-        await asyncio.sleep(timer(hr=9, days=1))
-
     @tasks.loop(seconds=timer(hr=12))
     async def astro_newsletter(self):
 
@@ -329,7 +210,7 @@ class mirko(discord.Client):
         act = discord.Game(
             name=status) if statuses.index(status) < 2 else discord.Activity(
                 type=discord.ActivityType.watching, name=status
-        ) if statuses.index(status) == 3 else discord.Activity(
+            ) if statuses.index(status) == 3 else discord.Activity(
                 type=discord.ActivityType.listening, name=status)
         await bot.change_presence(status=discord.Status.online, activity=act)
 
@@ -360,9 +241,13 @@ bot = mirko()
 tree = app_commands.CommandTree(bot)
 
 
-@tree.command(name='menu', description='test menu', guild=discord.Object(id=913678455223251004))
+@tree.command(name='menu',
+              description='test menu',
+              guild=discord.Object(id=913678455223251004))
 async def button(interaction: discord.Interaction):
     await interaction.response.send_message(view=Menu())
+
+
 # , guild=discord.Object(id=913678455223251004))
 
 
@@ -395,15 +280,6 @@ async def self(interaction: discord.Interaction):
 @tree.command(name='moon', description='Sends Moon\'s Phase')
 async def self(interaction: discord.Interaction):
     await interaction.response.send_message(embed=moon_find())
-
-
-@tree.command(name='price',
-              description='Sends product\'s current price',
-              guild=discord.Object(id=913678455223251004))
-async def self(interaction: discord.Interaction):
-    res = price_checker()
-    await bot.get_channel(my_channel).send(embed=res[0])
-    await bot.get_channel(my_channel).send(embed=res[1])
 
 
 @tree.command(name='block',
@@ -622,12 +498,14 @@ async def self(interaction: discord.Interaction, user: discord.User):
 async def self(interaction: discord.Interaction):
     embed = discord.Embed(
         title='Mirko Bot Komande',
-        description=' \n**-img**   \nšalje random sliku iz baze podataka \n\n  **-pong**  \n šalje Mirkov ping \n\n  **-dm user_id "poruka"**  \nšalje poruku u DM, ako nema id-a poruka se šalje pošiljatelju poruke \n\n  **-sun**  \n šalje podatke o trenutnoj Sunčevoj aktivnosti \n\n  **-moon**  \n šalje trenutnu osvjetljenost Mjeseca',
+        description=
+        ' \n**-img**   \nšalje random sliku iz baze podataka \n\n  **-pong**  \n šalje Mirkov ping \n\n  **-dm user_id "poruka"**  \nšalje poruku u DM, ako nema id-a poruka se šalje pošiljatelju poruke \n\n  **-sun**  \n šalje podatke o trenutnoj Sunčevoj aktivnosti \n\n  **-moon**  \n šalje trenutnu osvjetljenost Mjeseca',
         color=discord.Colour.red(),
     )
     embed.set_author(
         name='Mirko Bot',
-        icon_url='https://static.miraheze.org/hololivewiki/thumb/0/06/Album_Cover_Art_-_YoinoYoYoi.png/1200px-Album_Cover_Art_-_YoinoYoYoi.png'
+        icon_url=
+        'https://static.miraheze.org/hololivewiki/thumb/0/06/Album_Cover_Art_-_YoinoYoYoi.png/1200px-Album_Cover_Art_-_YoinoYoYoi.png'
     )
     embed.set_footer(text='For aditional information message Helix#3958.')
     embed.set_thumbnail(url=r'https://i.ibb.co/4TCmGnj/20220701-202610.png')
