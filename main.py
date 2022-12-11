@@ -252,7 +252,12 @@ async def self(interaction: discord.Interaction, code: str):
     anime_dict[show.tag] = show.url
     with open('database/anime_dict.pkl', 'wb') as f:
         pickle.dump(anime_dict, f)
-    await interaction.response.send_message(show.__str__())
+    # await interaction.response.send_message(show.__str__())
+    out = discord.Embed(title=show.name,
+                        description=show.__str__(),
+                        color=genres[show.genre])
+    out.set_image(url=show.cover_url)
+    await interaction.response.send_message(embed=out)
 
 
 @tree.command(name='ping', description='Sends bot\'s ping')
