@@ -13,14 +13,10 @@ from discord.ext import commands, tasks
 
 from keep_alive import keep_alive
 
-from music_cog import music_cog
-from help_cog import help_cog
+from anime import *
 
 bot = commands.Bot(command_prefix='-', intents=discord.Intents.all())
 
-bot.remove_command("help")
-bot.add_cog(music_cog(bot))
-bot.add_cog(help_cog(bot))
 
 admin = int(os.environ['admin_id'])
 my_channel = int(os.environ['my_channel'])
@@ -229,33 +225,34 @@ class mirko(discord.Client):
         await ctx.replay(error, ephemeral=True)
 
 
-class Menu(discord.ui.View):
-    def __init__(self) -> None:
-        super().__init__(timeout=None)
-
-    @discord.ui.button(label='Moon', style=discord.ButtonStyle.blurple)
-    async def menu1(self, button: discord.ui.Button,
-                    interaction: discord.Interaction):
-        await interaction.response.edit_message(embed=moon_find())
-
-    @discord.ui.button(label='Sun', style=discord.ButtonStyle.red)
-    async def menu2(self, button: discord.ui.Button,
-                    interaction: discord.Interaction):
-        await interaction.response.edit_message(embed=sun_find())
-
-
 bot = mirko()
 tree = app_commands.CommandTree(bot)
 
-
-@tree.command(name='menu',
-              description='test menu',
-              guild=discord.Object(id=913678455223251004))
-async def button(interaction: discord.Interaction):
-    await interaction.response.send_message(view=Menu())
-
-
 # , guild=discord.Object(id=913678455223251004))
+
+
+@tree.command(name='anime_list', description="Sends names and codes for known anime for easier search.")
+async def self(interaction: discord.Interaction):
+    msg = ""
+    with open('database/anime_dict.pkl', 'rb') as f:
+        anime_dict = pickle.load(f)
+    for item in anime_dict:
+        msg += f"{item} - {anime_dict[item]}\n"
+    await interaction.response.send_message(msg)
+
+
+@tree.command(name='anime', description="Sends data about given anime, use code or a link to get data.")
+async def self(interaction: discord.Interaction, code: str):
+    if code.isdigit():
+        code = "https://myanimelist.net/anime/"+code
+    show = anime(code)
+    show.fetch_data()
+    with open('database/anime_dict.pkl', 'rb') as f:
+        anime_dict = pickle.load(f)
+    anime_dict[show.tag] = show.url
+    with open('database/anime_dict.pkl', 'wb') as f:
+        pickle.dump(anime_dict, f)
+    await interaction.response.send_message(show.__str__())
 
 
 @tree.command(name='ping', description='Sends bot\'s ping')
