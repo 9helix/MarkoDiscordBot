@@ -256,7 +256,7 @@ async def self(interaction: discord.Interaction, code: str):
     show = anime(code)
     show.fetch_data()
 
-    anime_dict[[x.lower() for x in show.name.split()]] = show.url
+    anime_dict[tuple([x.lower() for x in show.name.split()])] = show.url
     with open('database/anime_dict.pkl', 'wb') as f:
         pickle.dump(anime_dict, f)
     # await interaction.response.send_message(show.__str__())
