@@ -37,9 +37,10 @@ class anime:
                 airing_start = self.airing[:-5]
             if i.text == "Broadcast:":
                 broadcast = i.parent.text
-                self.broadcast = broadcast[16:-13]
+                self.broadcast = broadcast[16:-7]
+                broadcast = broadcast[16:-13]
 
-                broadcast_hour = self.broadcast.split()[2]
+                broadcast_hour = broadcast.split()[2]
 
             if i.text == "Episodes:":
                 episodes = i.parent.text

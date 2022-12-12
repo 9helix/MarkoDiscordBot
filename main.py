@@ -161,7 +161,7 @@ class mirko(discord.Client):
     async def on_ready(self):
         await self.wait_until_ready()
         if not self.synced:
-            await tree.sync(guild=discord.Object(id=913678455223251004))
+            await tree.sync(guild=discord.Object(id=my_channel))
             await tree.sync()
             self.synced = True
         print(f"Logged in as {bot.user}")
@@ -228,10 +228,10 @@ class mirko(discord.Client):
 bot = mirko()
 tree = app_commands.CommandTree(bot)
 
-# , guild=discord.Object(id=913678455223251004))
+# , guild=discord.Object(id=my_channel))
 
 
-@tree.command(name='anime_list', description="Sends names and codes for known anime for easier search.")
+@tree.command(name='anime_list', description="Sends names and MAL URLs for known anime for easier search.")
 async def self(interaction: discord.Interaction):
     msg = ""
     with open('database/anime_dict.pkl', 'rb') as f:
@@ -241,25 +241,41 @@ async def self(interaction: discord.Interaction):
     await interaction.response.send_message(msg)
 
 
-@tree.command(name='anime', description="Sends data about given anime, use code or a link to get data.")
+@tree.command(name='anime', description="Sends data about given anime, use code, MAL URL or anime name to get data.")
 async def self(interaction: discord.Interaction, code: str):
     await interaction.response.defer(ephemeral=False)
-    if code.isdigit():
+    with open('database/anime_dict.pkl', 'rb') as f:
+        anime_dict = pickle.load(f)
+    if not code.isdigit() and "myanimelist.net" not in code:
+        for tag in anime_dict:
+            if code in tag:
+                code = anime_dict[tag]
+                break
+    elif code.isdigit():
         code = "https://myanimelist.net/anime/"+code
     show = anime(code)
     show.fetch_data()
-    with open('database/anime_dict.pkl', 'rb') as f:
-        anime_dict = pickle.load(f)
-    anime_dict[show.tag] = show.url
+
+    anime_dict[[x.lower() for x in show.name.split()]] = show.url
     with open('database/anime_dict.pkl', 'wb') as f:
         pickle.dump(anime_dict, f)
     # await interaction.response.send_message(show.__str__())
     out = discord.Embed(title=show.name,
-    description=show.__str__(),
+                        description=show.__str__(),
                         color=genres[show.genre])
     out.set_image(url=show.cover_url)
-    #await interaction.response.send_message(embed=out)
+    # await interaction.response.send_message(embed=out)
     await interaction.followup.send(embed=out)
+
+
+@tree.command(name='anime_clear', description="Empties anime list.")
+async def self(interaction: discord.Interaction):
+    with open('database/anime_dict.pkl', 'rb') as f:
+        anime_dict = pickle.load(f)
+    anime_dict = {}
+    with open('database/anime_dict.pkl', 'wb') as f:
+        pickle.dump(anime_dict, f)
+    await interaction.response.send_message("List deleted.")
 
 
 @tree.command(name='ping', description='Sends bot\'s ping')
@@ -270,7 +286,7 @@ async def self(interaction: discord.Interaction):
 
 @tree.command(name='send',
               description='Sends a message to a channel [DEV ONLY!]',
-              guild=discord.Object(id=913678455223251004))
+              guild=discord.Object(id=my_channel))
 async def self(interaction: discord.Interaction, channel: int, message: str):
     if interaction.user.id in devs:
         try:
@@ -425,7 +441,7 @@ async def self(interaction: discord.Interaction):
 
 @tree.command(name='quit',
               description='Shuts down the bot [DEV ONLY!]',
-              guild=discord.Object(id=913678455223251004))
+              guild=discord.Object(id=my_channel))
 async def self(interaction: discord.Interaction):
     if interaction.user.id in devs:
         await interaction.response.send_message('Shutting down...')
@@ -437,7 +453,7 @@ async def self(interaction: discord.Interaction):
 
 @tree.command(name='reboot',
               description='Restarts the bot [DEV ONLY!]',
-              guild=discord.Object(id=913678455223251004))
+              guild=discord.Object(id=my_channel))
 async def self(interaction: discord.Interaction):
     if interaction.user.id in devs:
         f = open('database/reboot.txt', 'w')
