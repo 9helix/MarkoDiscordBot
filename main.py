@@ -243,6 +243,7 @@ async def self(interaction: discord.Interaction):
 
 @tree.command(name='anime', description="Sends data about given anime, use code or a link to get data.")
 async def self(interaction: discord.Interaction, code: str):
+    await interaction.response.defer(ephemeral=False)
     if code.isdigit():
         code = "https://myanimelist.net/anime/"+code
     show = anime(code)
@@ -254,10 +255,11 @@ async def self(interaction: discord.Interaction, code: str):
         pickle.dump(anime_dict, f)
     # await interaction.response.send_message(show.__str__())
     out = discord.Embed(title=show.name,
-                        description=show.__str__(),
+    description=show.__str__(),
                         color=genres[show.genre])
     out.set_image(url=show.cover_url)
-    await interaction.response.send_message(embed=out)
+    #await interaction.response.send_message(embed=out)
+    await interaction.followup.send(embed=out)
 
 
 @tree.command(name='ping', description='Sends bot\'s ping')
