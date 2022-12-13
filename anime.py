@@ -94,8 +94,8 @@ class anime:
 #url = "https://myanimelist.net/anime/49596/Blue_Lock"
 #show = anime(url)
 # show.fetch_data()
-genres = {"Action": Color.red(), "Adventure": Color.orange(), "Comedy": Color.yellow(), "Drama": Color.purple(), "Sci-Fi": Color.green(), "Fantasy": Color.blue(),
-          "Horror": Color.blurple(), "Romance": Color.magenta(), "Mystery": Color.dark_blue(), "Sports": Color.teal(), "Supernatural": Color.dark_green(), "Slice of Life": Color.dark_gold()}
+genres = {"Action": Color.brand_red(), "Adventure": Color.orange(), "Comedy": Color.gold(), "Drama": Color.purple(), "Sci-Fi": Color.green(), "Fantasy": Color.brand_green(),
+          "Horror": Color.darker_grey(), "Romance": Color.fuchsia(), "Mystery": Color.dark_teal(), "Sports": Color.blue(), "Supernatural": Color.dark_green(), "Slice of Life": Color.yellow()}
 """
 with open('database/anime_dict.pkl', 'rb') as f:
     anime_dict = pickle.load(f)
