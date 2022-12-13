@@ -254,20 +254,21 @@ async def self(interaction: discord.Interaction, code: str):
     elif code.isdigit():
         code = "https://myanimelist.net/anime/"+code
     show = anime(code)
-    show.fetch_data()
-
-    anime_dict[tuple([x.lower() for x in show.name.split()])] = show.url
-    with open('database/anime_dict.pkl', 'wb') as f:
-        pickle.dump(anime_dict, f)
-    # await interaction.response.send_message(show.__str__())
-    out = discord.Embed(title=show.name,
-                        description=show.__str__(),
-                        color=genres[show.genre])
-    out.set_image(url=show.cover_url)
-    # await interaction.response.send_message(embed=out)
-    await interaction.followup.send(embed=out)
-
-
+    try:
+        show.fetch_data()
+    
+        anime_dict[tuple([x.lower() for x in show.name.split()])] = show.url
+        with open('database/anime_dict.pkl', 'wb') as f:
+            pickle.dump(anime_dict, f)
+        # await interaction.response.send_message(show.__str__())
+        out = discord.Embed(title=show.name,
+                            description=show.__str__(),
+                            color=genres[show.genre1])
+        out.set_image(url=show.cover_url)
+        # await interaction.response.send_message(embed=out)
+        await interaction.followup.send(embed=out)
+    except:
+        await interaction.followup.send("Unsupported URL or anime.")
 @tree.command(name='anime_clear', description="Empties anime list.")
 async def self(interaction: discord.Interaction):
     with open('database/anime_dict.pkl', 'rb') as f:

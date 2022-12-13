@@ -20,6 +20,7 @@ class anime:
         self.countdown = ""
         self.genre = "Unknown"
         self.studio = "Unknown"
+        self.genre1=""
 
     def fetch_data(self):
         page = requests.get(self.url)
@@ -58,9 +59,13 @@ class anime:
             if "Genre" in i.text:
                 genre1 = i.findNext("span").text
 
-                #genre2 = i.findNext("span").findNext("span").text
+                genre2 = i.findNext("span").findNext("span").text
                 #print(genre1, genre2)
-                self.genre = f"{genre1}"
+                self.genre1=genre1
+                if genre2 in genres:    
+                    self.genre = f"{genre1}, {genre2}"
+                else:
+                    self.genre=genre1
                 #self.season = premiered[12:-1]
 
         if self.status == "Currently Airing":
