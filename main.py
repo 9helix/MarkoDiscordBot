@@ -221,6 +221,21 @@ class mirko(discord.Client):
     async def before_ch_pr(self):
         await self.wait_until_ready()
 
+    @tasks.loop(seconds=60)
+    async def anime_follow(self):
+        with open('database/follow_dict.pkl', 'rb') as f:
+            follow_dict, times = pickle.load(f)
+            for release_time in follow_dict:
+                for show in follow_dict[release_time]:
+                    for user in follow_dict[release_time][show]:
+                        await discord.DMChannel.send(user, f"{times[2]} episode {times[1]}. was just released!")
+
+    @anime_follow.before_loop
+    async def before_anime_follow(self):
+        await self.wait_until_ready()
+        with open('database/follow_dict.pkl', 'rb') as f:
+            follow_dict, times = pickle.load(f)
+
     async def on_command_error(self, ctx, error):
         await ctx.replay(error, ephemeral=True)
 
@@ -247,16 +262,20 @@ async def self(interaction: discord.Interaction, code: str):
     with open('database/anime_dict.pkl', 'rb') as f:
         anime_dict = pickle.load(f)
     if not code.isdigit() and "myanimelist.net" not in code:
+        code = [x.lower() for x in code.split()]
         for tag in anime_dict:
-            if code in tag:
-                code = anime_dict[tag]
+            for word in code:
+                if word in tag:
+                    code = anime_dict[tag]
+                    break
+            if word in tag:
                 break
     elif code.isdigit():
         code = "https://myanimelist.net/anime/"+code
     show = anime(code)
     try:
         show.fetch_data()
-    
+
         anime_dict[tuple([x.lower() for x in show.name.split()])] = show.url
         with open('database/anime_dict.pkl', 'wb') as f:
             pickle.dump(anime_dict, f)
@@ -269,6 +288,61 @@ async def self(interaction: discord.Interaction, code: str):
         await interaction.followup.send(embed=out)
     except:
         await interaction.followup.send("Unsupported URL or anime.")
+
+
+@tree.command(name='follow', description="Notifies you when a new episode of a given anime comes.")
+async def self(interaction: discord.Interaction, code: str):
+    await interaction.response.defer(ephemeral=False)
+    with open('database/anime_dict.pkl', 'rb') as f:
+        anime_dict = pickle.load(f)
+    if not code.isdigit() and "myanimelist.net" not in code:
+        code = [x.lower() for x in code.split()]
+        for tag in anime_dict:
+            for word in code:
+                if word in tag:
+                    code = anime_dict[tag]
+                    break
+            if word in tag:
+                break
+    elif code.isdigit():
+        code = "https://myanimelist.net/anime/"+code
+
+    show = anime(code)
+    try:
+        show.fetch_data()
+
+        anime_dict[tuple([x.lower() for x in show.name.split()])] = show.url
+        with open('database/anime_dict.pkl', 'wb') as f:
+            pickle.dump(anime_dict, f)
+
+        with open('database/follow_dict.pkl', 'rb') as f:
+            follow_dict, times = pickle.load(f)
+
+        if show.secs_left not in follow_dict:
+            follow_dict[show.secs_left] = {}
+        if show.tag not in follow_dict[show.secs_left]:
+            follow_dict[show.secs_left][show.tag] = []
+        if interaction.user not in follow_dict[show.secs_left][show.tag]:
+            follow_dict[show.secs_left][show.tag].append(interaction.user)
+
+        def sorter(e):
+            time_left = timedelta(days=(e[1]+1)*7) - \
+                (datetime.utcnow()-e[0])
+            return time_left.seconds+time_left.days*86400
+
+        if show.time not in times:
+            times.append(show.time)
+            times.sort(key=sorter)
+
+        with open('database/follow_dict.pkl', 'wb') as f:
+            pickle.dump([follow_dict, times], f)
+
+        await interaction.followup.send(interaction.user, content=f"Successfully subsribed to {show.name}.")
+        # discord.DMchannel.send
+    except:
+        await interaction.followup.send("Unsupported URL or anime.")
+
+
 @tree.command(name='anime_clear', description="Empties anime list.")
 async def self(interaction: discord.Interaction):
     with open('database/anime_dict.pkl', 'rb') as f:

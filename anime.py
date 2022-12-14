@@ -20,7 +20,7 @@ class anime:
         self.countdown = ""
         self.genre = "Unknown"
         self.studio = "Unknown"
-        self.genre1=""
+        self.genre1 = ""
 
     def fetch_data(self):
         page = requests.get(self.url)
@@ -36,36 +36,37 @@ class anime:
                 airing = i.parent.text
                 self.airing = airing[10:-3]
                 airing_start = self.airing[:-5]
-            if i.text == "Broadcast:":
+            elif i.text == "Broadcast:":
                 broadcast = i.parent.text
                 self.broadcast = broadcast[16:-7]
                 broadcast = broadcast[16:-13]
 
                 broadcast_hour = broadcast.split()[2]
 
-            if i.text == "Episodes:":
+            elif i.text == "Episodes:":
                 episodes = i.parent.text
                 self.episodes = episodes[13:-3]
 
-            if i.text == "Status:":
+            elif i.text == "Status:":
                 status = i.parent.text
                 self.status = status[11:-3]
-            if i.text == "Premiered:":
+            elif i.text == "Premiered:":
                 premiered = i.parent.text
                 self.season = premiered[12:-1]
-            if i.text == "Studios:":
+            elif i.text == "Studios:":
                 studio = i.parent.text
                 self.studio = studio[10:-1]
-            if "Genre" in i.text:
+            elif "Genre" in i.text:
                 genre1 = i.findNext("span").text
 
                 genre2 = i.findNext("span").findNext("span").text
                 #print(genre1, genre2)
-                self.genre1=genre1
-                if genre2 in genres:    
+                self.genre1 = genre1
+                if genre2 in genres:
                     self.genre = f"{genre1}, {genre2}"
                 else:
-                    self.genre=genre1
+                    self.genre = genre1
+                break
                 #self.season = premiered[12:-1]
 
         if self.status == "Currently Airing":
@@ -78,6 +79,8 @@ class anime:
                 (datetime.utcnow()-start)
             countdown = "\n\nNext episode in: "
             days = time_left.days
+            self.time = [start, cur_episodes, self.name]
+            self.secs_left = time_left.seconds+days*86400
             if days > 0:
                 countdown += str(days)+" days, "
             hours = time_left.seconds//3600
