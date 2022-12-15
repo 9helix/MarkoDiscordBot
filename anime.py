@@ -35,7 +35,7 @@ class anime:
             if i.text == "Aired:":
                 airing = i.parent.text
                 self.airing = airing[10:-3]
-                airing_start = self.airing[:-5]
+                airing_start = self.airing[:self.airing.find(" to")]
             elif i.text == "Broadcast:":
                 broadcast = i.parent.text
                 self.broadcast = broadcast[16:-7]
@@ -73,7 +73,7 @@ class anime:
             time = airing_start+" "+broadcast_hour
             start = datetime.strptime(time, '%b %d, %Y %H:%M')
             start = start - timedelta(hours=9)
-            cur_episodes = (datetime.utcnow()-start).days//7
+            cur_episodes = (datetime.utcnow()-start).days//7+1
             self.cur_episodes = cur_episodes
             time_left = timedelta(days=(cur_episodes+1)*7) - \
                 (datetime.utcnow()-start)
