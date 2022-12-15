@@ -223,17 +223,24 @@ class mirko(discord.Client):
 
     @tasks.loop(seconds=60)
     async def anime_follow(self):
+        index += 1
+        index %= len(times)
         with open('database/follow_dict.pkl', 'rb') as f:
             follow_dict, times = pickle.load(f)
-        for release_time in follow_dict:
-            for user in follow_dict[release_time]:
+
+        while index == 0 or index == len(times)-1 or (times[index][5] == times[index-1][5] and times[index][0].hour == times[index-1][0].hour and times[index][0].minute == times[index-1][0].minute):
+            for user in follow_dict[times[index]]:
                 await discord.DMChannel.send(user, f"{times[2]} episode {times[1]}. was just released!")
-            replacement = release_time.copy()
-            replacement[1] = str(int(release_time[1])+1)
-            follow_dict[replacement] = follow_dict.pop(release_time)
-            times[times.index(release_time)] = replacement
-        with open('database/follow_dict.pkl', 'wb') as f:
-            pickle.dump([follow_dict, times], f)
+            replacement = follow_dict[times[index]].copy()
+            replacement[1] = str(int(follow_dict[times[index]][1])+1)
+            follow_dict[replacement] = follow_dict.pop(
+                follow_dict[times[index]])
+            times[times.times[index](follow_dict[times[index]])] = replacement
+            with open('database/follow_dict.pkl', 'wb') as f:
+                pickle.dump([follow_dict, times], f)
+        time_left = timedelta(days=(times[index][1]+1)*7) - \
+            (datetime.utcnow()-times[index][0])
+        await asyncio.sleep(time_left.seconds+time_left.days*86400)
 
     @anime_follow.before_loop
     async def before_anime_follow(self):
@@ -242,7 +249,8 @@ class mirko(discord.Client):
             follow_dict, times = pickle.load(f)
         time_left = timedelta(days=(times[0][1]+1)*7) - \
             (datetime.utcnow()-times[0][0])
-        asyncio.sleep(time_left.seconds+time_left.days*86400)
+        await asyncio.sleep(time_left.seconds+time_left.days*86400)
+        index = -1
 
     async def on_command_error(self, ctx, error):
         await ctx.replay(error, ephemeral=True)
