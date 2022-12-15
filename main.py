@@ -225,16 +225,19 @@ class mirko(discord.Client):
     async def anime_follow(self):
         with open('database/follow_dict.pkl', 'rb') as f:
             follow_dict, times = pickle.load(f)
-            for release_time in follow_dict:
-                for show in follow_dict[release_time]:
-                    for user in follow_dict[release_time][show]:
-                        await discord.DMChannel.send(user, f"{times[2]} episode {times[1]}. was just released!")
+        for release_time in follow_dict:
+            for user in follow_dict[release_time]:
+                await discord.DMChannel.send(user, f"{times[2]} episode {times[1]}. was just released!")
+            
 
     @anime_follow.before_loop
     async def before_anime_follow(self):
         await self.wait_until_ready()
         with open('database/follow_dict.pkl', 'rb') as f:
             follow_dict, times = pickle.load(f)
+        time_left = timedelta(days=(times[0][1]+1)*7) - \
+                    (datetime.utcnow()-times[0][0])
+        asyncio.sleep(time_left.seconds+time_left.days*86400)
 
     async def on_command_error(self, ctx, error):
         await ctx.replay(error, ephemeral=True)
@@ -314,30 +317,31 @@ async def self(interaction: discord.Interaction, code: str):
         anime_dict[tuple([x.lower() for x in show.name.split()])] = show.url
         with open('database/anime_dict.pkl', 'wb') as f:
             pickle.dump(anime_dict, f)
+        if show.status=="Currently Airing":
 
-        with open('database/follow_dict.pkl', 'rb') as f:
-            follow_dict, times = pickle.load(f)
+            with open('database/follow_dict.pkl', 'rb') as f:
+                follow_dict, times = pickle.load(f)
 
-        if show.secs_left not in follow_dict:
-            follow_dict[show.secs_left] = {}
-        if show.tag not in follow_dict[show.secs_left]:
-            follow_dict[show.secs_left][show.tag] = []
-        if interaction.user not in follow_dict[show.secs_left][show.tag]:
-            follow_dict[show.secs_left][show.tag].append(interaction.user)
+            if show.time not in follow_dict:
+                follow_dict[show.time] = []
+            if interaction.user not in follow_dict[show.time]:
+                follow_dict[show.time].append(interaction.user)
 
-        def sorter(e):
-            time_left = timedelta(days=(e[1]+1)*7) - \
-                (datetime.utcnow()-e[0])
-            return time_left.seconds+time_left.days*86400
+            def sorter(e):
+                time_left = timedelta(days=(e[1]+1)*7) - \
+                    (datetime.utcnow()-e[0])
+                return time_left.seconds+time_left.days*86400
 
-        if show.time not in times:
-            times.append(show.time)
-            times.sort(key=sorter)
+            if show.time not in times:
+                times.append(show.time)
+                times.sort(key=sorter)
 
-        with open('database/follow_dict.pkl', 'wb') as f:
-            pickle.dump([follow_dict, times], f)
+            with open('database/follow_dict.pkl', 'wb') as f:
+                pickle.dump([follow_dict, times], f)
 
-        await interaction.followup.send(interaction.user, content=f"Successfully subsribed to {show.name}.")
+            await interaction.followup.send(interaction.user, content=f"Successfully subsribed to {show.name}.")
+        else:
+            await interaction.followup.send(interaction.user, content=f"{show.name} anime is already finished.")
         # discord.DMchannel.send
     except:
         await interaction.followup.send("Unsupported URL or anime.")

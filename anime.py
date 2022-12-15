@@ -79,7 +79,7 @@ class anime:
                 (datetime.utcnow()-start)
             countdown = "\n\nNext episode in: "
             days = time_left.days
-            self.time = [start, cur_episodes, self.name]
+            self.time = [start, cur_episodes, self.name, self.episodes,self.tag]
             self.secs_left = time_left.seconds+days*86400
             if days > 0:
                 countdown += str(days)+" days, "
