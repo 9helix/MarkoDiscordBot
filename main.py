@@ -228,7 +228,12 @@ class mirko(discord.Client):
         for release_time in follow_dict:
             for user in follow_dict[release_time]:
                 await discord.DMChannel.send(user, f"{times[2]} episode {times[1]}. was just released!")
-            
+            replacement = release_time.copy()
+            replacement[1] = str(int(release_time[1])+1)
+            follow_dict[replacement] = follow_dict.pop(release_time)
+            times[times.index(release_time)] = replacement
+        with open('database/follow_dict.pkl', 'wb') as f:
+            pickle.dump([follow_dict, times], f)
 
     @anime_follow.before_loop
     async def before_anime_follow(self):
@@ -236,7 +241,7 @@ class mirko(discord.Client):
         with open('database/follow_dict.pkl', 'rb') as f:
             follow_dict, times = pickle.load(f)
         time_left = timedelta(days=(times[0][1]+1)*7) - \
-                    (datetime.utcnow()-times[0][0])
+            (datetime.utcnow()-times[0][0])
         asyncio.sleep(time_left.seconds+time_left.days*86400)
 
     async def on_command_error(self, ctx, error):
@@ -317,7 +322,7 @@ async def self(interaction: discord.Interaction, code: str):
         anime_dict[tuple([x.lower() for x in show.name.split()])] = show.url
         with open('database/anime_dict.pkl', 'wb') as f:
             pickle.dump(anime_dict, f)
-        if show.status=="Currently Airing":
+        if show.status == "Currently Airing":
 
             with open('database/follow_dict.pkl', 'rb') as f:
                 follow_dict, times = pickle.load(f)
