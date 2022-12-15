@@ -221,26 +221,28 @@ class mirko(discord.Client):
     async def before_ch_pr(self):
         await self.wait_until_ready()
 
-    @tasks.loop(seconds=60)
+    @tasks.loop(seconds=900)
     async def anime_follow(self):
-        index += 1
-        index %= len(times)
+
         with open('database/follow_dict.pkl', 'rb') as f:
             follow_dict, times = pickle.load(f)
+        if times:     
+            index += 1
+            index %= len(times)
 
-        while index == 0 or index == len(times)-1 or (times[index][5] == times[index-1][5] and times[index][0].hour == times[index-1][0].hour and times[index][0].minute == times[index-1][0].minute):
-            for user in follow_dict[times[index]]:
-                await discord.DMChannel.send(user, f"{times[2]} episode {times[1]}. was just released!")
-            replacement = follow_dict[times[index]].copy()
-            replacement[1] = str(int(follow_dict[times[index]][1])+1)
-            follow_dict[replacement] = follow_dict.pop(
-                follow_dict[times[index]])
-            times[times.times[index](follow_dict[times[index]])] = replacement
-            with open('database/follow_dict.pkl', 'wb') as f:
-                pickle.dump([follow_dict, times], f)
-        time_left = timedelta(days=(times[index][1]+1)*7) - \
-            (datetime.utcnow()-times[index][0])
-        await asyncio.sleep(time_left.seconds+time_left.days*86400)
+            while index == 0 or index == len(times)-1 or (times[index][5] == times[index-1][5] and times[index][0].hour == times[index-1][0].hour and times[index][0].minute == times[index-1][0].minute):
+                for user in follow_dict[times[index]]:
+                    await discord.DMChannel.send(user, f"{times[2]} episode {times[1]}. was just released!")
+                replacement = follow_dict[times[index]].copy()
+                replacement[1] = str(int(follow_dict[times[index]][1])+1)
+                follow_dict[replacement] = follow_dict.pop(
+                    follow_dict[times[index]])
+                times[times.times[index](follow_dict[times[index]])] = replacement
+                with open('database/follow_dict.pkl', 'wb') as f:
+                    pickle.dump([follow_dict, times], f)
+            time_left = timedelta(days=(times[index][1]+1)*7) - \
+                (datetime.utcnow()-times[index][0])
+            await asyncio.sleep(time_left.seconds+time_left.days*86400)
 
     @anime_follow.before_loop
     async def before_anime_follow(self):
