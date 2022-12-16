@@ -322,50 +322,58 @@ async def self(interaction: discord.Interaction, code: str):
     if not code.isdigit() and "myanimelist.net" not in code:
         code = [x.lower() for x in code.split()]
         for tag in anime_dict:
+            tag2 = tuple([x.lower() for x in tag.split()])
             for word in code:
-                if word in tag:
+                if word in tag2:
                     code = anime_dict[tag]
                     break
-            if word in tag:
+            if word in tag2:
                 break
     elif code.isdigit():
         code = "https://myanimelist.net/anime/"+code
 
     show = anime(code)
-    try:
-        show.fetch_data()
+    #try:
+    show.fetch_data()
 
-        anime_dict[tuple([x.lower() for x in show.name.split()])] = show.url
-        with open('database/anime_dict.pkl', 'wb') as f:
-            pickle.dump(anime_dict, f)
-        if show.status == "Currently Airing":
+    anime_dict[show.name] = show.url
+    with open('database/anime_dict.pkl', 'wb') as f:
+        print("pickling anime_dict",anime_dict,type(anime_dict))
+        pickle.dump(anime_dict, f)
+    if show.status == "Currently Airing":
 
-            with open('database/follow_dict.pkl', 'rb') as f:
-                follow_dict, times = pickle.load(f)
+        with open('database/follow_dict.pkl', 'rb') as f:
+            follow_dict= pickle.load(f)
+        with open('database/times.pkl', 'rb') as f:
+            times = pickle.load(f)
 
-            if show.time not in follow_dict:
-                follow_dict[show.time] = []
-            if interaction.user not in follow_dict[show.time]:
-                follow_dict[show.time].append(interaction.user)
+        if show.time not in follow_dict:
+            follow_dict[show.time] = []
+        if interaction.user not in follow_dict[show.time]:
+            follow_dict[show.time].append(interaction.user)
 
-            def sorter(e):
-                time_left = timedelta(days=(e[1]+1)*7) - \
-                    (datetime.utcnow()-e[0])
-                return time_left.seconds+time_left.days*86400
+        def sorter(e):
+            global time_left
+            time_left = timedelta(days=(e[1]+1)*7) - \
+                (datetime.utcnow()-e[0])
+            return time_left.seconds+time_left.days*86400
 
-            if show.time not in times:
-                times.append(show.time)
-                times.sort(key=sorter)
+        if show.time not in times:
+            times.append(show.time)
+            times.sort(key=sorter)
+        print("pickling follow_dict",follow_dict,type(follow_dict),times,type(times))
+        with open('database/follow_dict.pkl', 'wb') as f:
+            pickle.dump(follow_dict, f)
+        with open('database/times.pkl', 'wb') as f:
+            pickle.dump(times, f)
 
-            with open('database/follow_dict.pkl', 'wb') as f:
-                pickle.dump([follow_dict, times], f)
-
-            await interaction.followup.send(interaction.user, content=f"Successfully subsribed to {show.name}.")
-        else:
-            await interaction.followup.send(interaction.user, content=f"{show.name} anime is already finished.")
+        await interaction.followup.send(interaction.user, content=f"Successfully subsribed to {show.name}.")
+    else:
+        await interaction.followup.send(interaction.user, content=f"{show.name} anime is already finished.")
         # discord.DMchannel.send
-    except:
-        await interaction.followup.send("Unsupported URL or anime.")
+    #except Exception as e:
+    #    print(e)
+    #    await interaction.followup.send("Unsupported URL or anime.")
 
 
 @tree.command(name='anime_clear', description="Empties anime list.")
