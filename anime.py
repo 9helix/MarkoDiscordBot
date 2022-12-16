@@ -74,7 +74,7 @@ class anime:
             start = datetime.strptime(time, '%b %d, %Y %H:%M')
             start = start - timedelta(hours=9)
             cur_episodes = (datetime.utcnow()-start).days//7
-            self.cur_episodes = cur_episodes
+            self.cur_episodes = cur_episodes+1
             time_left = timedelta(days=(cur_episodes+1)*7) - \
                 (datetime.utcnow()-start)
             countdown = "\n\nNext episode in: "
