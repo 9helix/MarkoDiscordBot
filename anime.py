@@ -73,7 +73,7 @@ class anime:
             time = airing_start+" "+broadcast_hour
             start = datetime.strptime(time, '%b %d, %Y %H:%M')
             start = start - timedelta(hours=9)
-            cur_episodes = (datetime.utcnow()-start).days//7+1
+            cur_episodes = (datetime.utcnow()-start).days//7
             self.cur_episodes = cur_episodes
             time_left = timedelta(days=(cur_episodes+1)*7) - \
                 (datetime.utcnow()-start)

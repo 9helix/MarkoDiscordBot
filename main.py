@@ -69,7 +69,7 @@ def sun_find():
 
     url1 = "https://www.spaceweatherlive.com/includes/live-data.php?object=solar_flare&lang=EN"
     url2 = 'https://www.spaceweatherlive.com/includes/live-data.php?object=Plasma_Speed&lang=EN'
-    #payload = {}
+    # payload = {}
     headers = {
         # 'PostmanRuntime/7.29.0',
         'User-Agent':
@@ -175,7 +175,7 @@ class mirko(discord.Client):
 
     async def reboot_task(self):
         await self.wait_until_ready()
-        #print(f"Logged in as {bot.user}")
+        # print(f"Logged in as {bot.user}")
         f = open('database/reboot.txt', 'r+')
         # print(str(f.read()),f.read()=='',f.read())
         line = f.readline()
@@ -226,7 +226,7 @@ class mirko(discord.Client):
 
         with open('database/follow_dict.pkl', 'rb') as f:
             follow_dict, times = pickle.load(f)
-        if times:     
+        if times:
             index += 1
             index %= len(times)
 
@@ -237,7 +237,8 @@ class mirko(discord.Client):
                 replacement[1] = str(int(follow_dict[times[index]][1])+1)
                 follow_dict[replacement] = follow_dict.pop(
                     follow_dict[times[index]])
-                times[times.times[index](follow_dict[times[index]])] = replacement
+                times[times.times[index](
+                    follow_dict[times[index]])] = replacement
                 with open('database/follow_dict.pkl', 'wb') as f:
                     pickle.dump([follow_dict, times], f)
             time_left = timedelta(days=(times[index][1]+1)*7) - \
@@ -246,6 +247,7 @@ class mirko(discord.Client):
 
     @anime_follow.before_loop
     async def before_anime_follow(self):
+        global index
         await self.wait_until_ready()
         with open('database/follow_dict.pkl', 'rb') as f:
             follow_dict, times = pickle.load(f)
@@ -282,11 +284,12 @@ async def self(interaction: discord.Interaction, code: str):
     if not code.isdigit() and "myanimelist.net" not in code:
         code = [x.lower() for x in code.split()]
         for tag in anime_dict:
+            tag2 = tuple([x.lower() for x in tag.split()])
             for word in code:
-                if word in tag:
+                if word in tag2:
                     code = anime_dict[tag]
                     break
-            if word in tag:
+            if word in tag2:
                 break
     elif code.isdigit():
         code = "https://myanimelist.net/anime/"+code
@@ -294,7 +297,7 @@ async def self(interaction: discord.Interaction, code: str):
     try:
         show.fetch_data()
 
-        anime_dict[tuple([x.lower() for x in show.name.split()])] = show.url
+        anime_dict[show.name] = show.url
         with open('database/anime_dict.pkl', 'wb') as f:
             pickle.dump(anime_dict, f)
         # await interaction.response.send_message(show.__str__())
@@ -408,7 +411,7 @@ async def self(interaction: discord.Interaction):
 async def self(interaction: discord.Interaction, user: discord.Member):
     if interaction.user.id in devs:
         try:
-            #user = bot.get_user(user)
+            # user = bot.get_user(user)
             f = open('database/blocked.txt', 'a+')
             f.seek(0)
             if str(user.id) + '\n' in f.readlines():
@@ -431,12 +434,12 @@ async def self(interaction: discord.Interaction, user: discord.Member):
 async def self(interaction: discord.Interaction, user: discord.Member):
     if interaction.user.id in devs:
         try:
-            #user = bot.get_user(user)
+            # user = bot.get_user(user)
             f = open('database/blocked.txt', 'a+')
             f.seek(0)
             lines = f.readlines()
             f.close()
-            #print(lines, str(user.id)+'\n')
+            # print(lines, str(user.id)+'\n')
             if str(user.id) + '\n' not in lines:
                 await interaction.response.send_message(
                     f'User <@{user.id}> is already unblocked.')
@@ -596,7 +599,7 @@ async def self(interaction: discord.Interaction, user: discord.User):
             f.seek(0)
             lines = f.readlines()
             f.close()
-            #print(lines, str(user.id)+'\n')
+            # print(lines, str(user.id)+'\n')
             if str(user.id) + '\n' not in lines:
                 await interaction.response.send_message(
                     f'User <@{user.id}> isn\'t dev.')
