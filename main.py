@@ -271,8 +271,11 @@ async def self(interaction: discord.Interaction):
     msg = ""
     with open('database/anime_dict.pkl', 'rb') as f:
         anime_dict = pickle.load(f)
-    for item in anime_dict:
-        msg += f"{item} - {anime_dict[item]}\n"
+    if anime_dict:
+        for item in anime_dict:
+            msg += f"{item} - {anime_dict[item]}\n"
+    else:
+        msg="Anime list is currently empty. Use /anime command to add anime to it."
     await interaction.response.send_message(msg)
 
 
