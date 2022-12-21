@@ -4,6 +4,7 @@ import os
 import random
 import sys
 from datetime import datetime, timedelta
+import configparser
 
 import discord
 import requests
@@ -11,16 +12,17 @@ from bs4 import BeautifulSoup
 from discord import app_commands
 from discord.ext import commands, tasks
 
-from keep_alive import keep_alive
+# from keep_alive import keep_alive
 
 from anime import *
 
 bot = commands.Bot(command_prefix='-', intents=discord.Intents.all())
 
-
-admin = int(os.environ['admin_id'])
-my_channel = int(os.environ['my_channel'])
-token = str(os.environ['token'])
+config = configparser.ConfigParser()
+config.read('secret.ini')
+admin = config["DEFAULT"].getint('admin_id')
+my_channel = config["DEFAULT"].getint('my_channel')
+token = config["DEFAULT"]['token']
 
 f = open('database/devs.txt', 'a+')
 f.seek(0)
@@ -275,7 +277,7 @@ async def self(interaction: discord.Interaction):
         for item in anime_dict:
             msg += f"{item} - {anime_dict[item]}\n"
     else:
-        msg="Anime list is currently empty. Use /anime command to add anime to it."
+        msg = "Anime list is currently empty. Use /anime command to add anime to it."
     await interaction.response.send_message(msg)
 
 
@@ -333,17 +335,17 @@ async def self(interaction: discord.Interaction, code: str):
         code = "https://myanimelist.net/anime/"+code
 
     show = anime(code)
-    #try:
+    # try:
     show.fetch_data()
 
     anime_dict[show.name] = show.url
     with open('database/anime_dict.pkl', 'wb') as f:
-        print("pickling anime_dict",anime_dict,type(anime_dict))
+        print("pickling anime_dict", anime_dict, type(anime_dict))
         pickle.dump(anime_dict, f)
     if show.status == "Currently Airing":
 
         with open('database/follow_dict.pkl', 'rb') as f:
-            follow_dict= pickle.load(f)
+            follow_dict = pickle.load(f)
         with open('database/times.pkl', 'rb') as f:
             times = pickle.load(f)
 
@@ -361,7 +363,8 @@ async def self(interaction: discord.Interaction, code: str):
         if show.time not in times:
             times.append(show.time)
             times.sort(key=sorter)
-        print("pickling follow_dict",follow_dict,type(follow_dict),times,type(times))
+        print("pickling follow_dict", follow_dict,
+              type(follow_dict), times, type(times))
         with open('database/follow_dict.pkl', 'wb') as f:
             pickle.dump(follow_dict, f)
         with open('database/times.pkl', 'wb') as f:
@@ -371,7 +374,7 @@ async def self(interaction: discord.Interaction, code: str):
     else:
         await interaction.followup.send(interaction.user, content=f"{show.name} anime is already finished.")
         # discord.DMchannel.send
-    #except Exception as e:
+    # except Exception as e:
     #    print(e)
     #    await interaction.followup.send("Unsupported URL or anime.")
 
@@ -415,6 +418,12 @@ async def self(interaction: discord.Interaction):
 @tree.command(name='moon', description='Sends Moon\'s Phase')
 async def self(interaction: discord.Interaction):
     await interaction.response.send_message(embed=moon_find())
+
+
+def block_read():
+    with open('database/blocked.txt') as f:
+        blocked = f.read().splitlines()
+    return blocked
 
 
 @tree.command(name='block',
@@ -524,18 +533,21 @@ async def self(interaction: discord.Interaction,
 async def self(interaction: discord.Interaction,
                user: discord.User = None,
                message: str = None):
-    if message == None:
-        message = random.choice(dms)
-    if user == None:
-        user = interaction.user
+    if interaction.user.id not in block_read():
+        if message == None:
+            message = random.choice(dms)
+        if user == None:
+            user = interaction.user
 
-    try:
-        await discord.DMChannel.send(
-            user, file=discord.File(rf'database/images/{message}'))
+        try:
+            await discord.DMChannel.send(
+                user, file=discord.File(rf'database/images/{message}'))
 
-    except:
-        await discord.DMChannel.send(user, content=message)
-    await interaction.response.send_message('Message sent.')
+        except:
+            await discord.DMChannel.send(user, content=message)
+        await interaction.response.send_message('Message sent.')
+    else:
+        await interaction.response.send_message('You are blocked.')
 
 
 @tree.command(name='img', description='Sends a random image from the database')
@@ -657,5 +669,5 @@ async def on_command_error(ctx, error):
         await ctx.send("Unknown command.")
 
 
-keep_alive()
+# keep_alive()
 bot.run(token)
