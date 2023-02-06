@@ -1,8 +1,14 @@
 import requests
 from bs4 import BeautifulSoup as bs
-from datetime import datetime, timedelta
+import datetime
 import pickle
 from discord import Color
+
+genres = {"Action": Color.brand_red(), "Adventure": Color.orange(), "Comedy": Color.gold(), "Drama": Color.purple(), "Sci-Fi": Color.green(), "Fantasy": Color.brand_green(),
+          "Horror": Color.darker_grey(), "Romance": Color.fuchsia(), "Mystery": Color.dark_teal(), "Sports": Color.blue(), "Supernatural": Color.dark_green(), "Slice of Life": Color.yellow()}
+wdays = {"Monday": 1, "Tuesday": 2, "Wednesday": 3,
+         "Thursday": 4, "Friday": 5, "Saturday": 6, "Sunday": 7}
+newline = "\n"
 
 
 class anime:
@@ -21,12 +27,21 @@ class anime:
         self.genre = "Unknown"
         self.studio = "Unknown"
         self.genre1 = ""
+        self.score = "N/A"
+        self.max_episodes = 0
+
+        self.weekday = 0
+        self.start = 0
+    #
 
     def fetch_data(self):
         page = requests.get(self.url)
 
         soup = bs(page.content, 'html.parser')
         stats = soup.find_all("span", {"class": "dark_text"})
+        self.score = soup.find("div", {"class": "score-label"}).text
+        if self.score != "N/A":
+            self.score += "  ⭐"
         self.name = soup.find("h1", {"class": "title-name h1_bold_none"}).text
         self.tag = self.url[30:35]
         image = soup.find("img", {"itemprop": "image"})['data-src']
@@ -38,49 +53,69 @@ class anime:
                 airing_start = self.airing[:self.airing.find(" to")]
             elif i.text == "Broadcast:":
                 broadcast = i.parent.text
-                self.broadcast = broadcast[16:-7]
-                broadcast = broadcast[16:-13]
+                if "Unknown" not in broadcast:
 
-                broadcast_hour = broadcast.split()[2]
+                    self.broadcast = broadcast[16:-7]
+                    broadcast = broadcast[16:-13]
+
+                    broadcast_hour = broadcast.split()[2]
+
+                    self.weekday = wdays[broadcast.split()[0][:-1]]
+                    # ep_time = [int(x) for x in broadcast_hour.split(":")]
+                    ep_date = datetime.datetime.strptime(
+                        broadcast_hour, "%H:%M")-datetime.timedelta(hours=9)
+                    if datetime.datetime.strptime(broadcast_hour, "%H:%M").day != ep_date.day:
+                        self.weekday -= 1
+                        if self.weekday == 0:
+                            self.weekday = 7
+                    self.start = datetime.time(
+                        hour=ep_date.hour, minute=ep_date.minute)
 
             elif i.text == "Episodes:":
                 episodes = i.parent.text
-                self.episodes = episodes[13:-3]
+                self.max_episodes = int(episodes[13:-3])
 
             elif i.text == "Status:":
                 status = i.parent.text
                 self.status = status[11:-3]
             elif i.text == "Premiered:":
                 premiered = i.parent.text
-                self.season = premiered[12:-1]
+                if "?" in premiered:
+                    self.season = "Unknown"
+                else:
+                    self.season = premiered[12:-1]
             elif i.text == "Studios:":
                 studio = i.parent.text
-                self.studio = studio[10:-1]
+                if "None found" in studio:
+                    self.studio = "Unknown"
+                else:
+                    self.studio = studio[10:-1]
             elif "Genre" in i.text:
                 genre1 = i.findNext("span").text
 
                 genre2 = i.findNext("span").findNext("span").text
-                #print(genre1, genre2)
+                # print(genre1, genre2)
                 self.genre1 = genre1
                 if genre2 in genres:
                     self.genre = f"{genre1}, {genre2}"
                 else:
                     self.genre = genre1
                 break
-                #self.season = premiered[12:-1]
+                # self.season = premiered[12:-1]
 
         if self.status == "Currently Airing":
+            self.status += "  🟢"
             time = airing_start+" "+broadcast_hour
-            start = datetime.strptime(time, '%b %d, %Y %H:%M')
-            start = start - timedelta(hours=9)
-            cur_episodes = (datetime.utcnow()-start).days//7
-            self.cur_episodes = cur_episodes+1
-            time_left = timedelta(days=(cur_episodes+1)*7) - \
-                (datetime.utcnow()-start)
+            start = datetime.datetime.strptime(time, '%b %d, %Y %H:%M')
+            start = start - datetime.timedelta(hours=9)
+            self.cur_episodes = (datetime.datetime.utcnow()-start).days//7+1
+            # self.cur_episodes = cur_episodes+1
+            time_left = datetime.timedelta(days=(self.cur_episodes)*7) - \
+                (datetime.datetime.utcnow()-start)
             countdown = "\n\nNext episode in: "
             days = time_left.days
-            self.time = (start, cur_episodes, self.name,
-                         self.episodes, self.tag, broadcast[0])
+            self.time = (start, self.cur_episodes, self.name,
+                         self.max_episodes, self.tag, broadcast_hour)
             self.secs_left = time_left.seconds+days*86400
             if days > 0:
                 countdown += str(days)+" days, "
@@ -89,22 +124,27 @@ class anime:
                 countdown += str(hours)+" hours, "
             minutes = (time_left.seconds % 3600)//60
             if minutes > 0:
-                countdown += str(minutes)+" minutes, "
-            seconds = (time_left.seconds % 3600) % 60
+                countdown += str(minutes)+" minutes"
+            """ seconds = (time_left.seconds % 3600) % 60
             if seconds > 0:
-                countdown += str(seconds)+" seconds"
+                countdown += str(seconds)+" seconds" """
             self.countdown = countdown+"."
-            self.episodes = f"{cur_episodes}/{self.episodes}"
+            self.episodes = f"{self.cur_episodes}/{self.max_episodes}"
+        elif self.status == "Finished Airing":
+            self.status += "  🔴"
+        else:
+            self.status += "  🟡"
 
     def __str__(self):
-        return f"Name: {self.name}\nEpisodes: {self.episodes}\nStatus: {self.status}\nAiring: {self.airing}\nSeason: {self.season}\nBroadcast: {self.broadcast}\nGenre: {self.genre}\nStudio: {self.studio}\nURL: {self.url}{self.countdown}"
+        return f"Score: {self.score}\nEpisodes: {self.episodes}\nStatus: {self.status}\nAiring: {self.airing}\n{f'Season: {self.season}'+newline if f'{self.season}'!='Unknown' else ''}Broadcast: {self.broadcast}\nGenre: {self.genre}\nStudio: {self.studio}\nURL: {self.url}{self.countdown}"
 
 
-#url = "https://myanimelist.net/anime/49596/Blue_Lock"
-#show = anime(url)
-# show.fetch_data()
-genres = {"Action": Color.brand_red(), "Adventure": Color.orange(), "Comedy": Color.gold(), "Drama": Color.purple(), "Sci-Fi": Color.green(), "Fantasy": Color.brand_green(),
-          "Horror": Color.darker_grey(), "Romance": Color.fuchsia(), "Mystery": Color.dark_teal(), "Sports": Color.blue(), "Supernatural": Color.dark_green(), "Slice of Life": Color.yellow()}
+"""
+url = "https://myanimelist.net/anime/52635/Kami_no_Tou_2nd_Season?q=tower%20of%20god&cat=anime"
+show = anime(url)
+show.fetch_data()
+print(show)"""
+
 """
 with open('database/anime_dict.pkl', 'rb') as f:
     anime_dict = pickle.load(f)
