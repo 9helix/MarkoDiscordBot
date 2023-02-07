@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 from discord import app_commands
 from discord.ext import commands, tasks
 import datetime
-# from keep_alive import keep_alive
+from keep_alive import keep_alive
 
 from anime import *
 
@@ -765,5 +765,5 @@ async def on_command_error(ctx, error):
         await ctx.send("Unknown command.")
 
 
-# keep_alive()
+keep_alive()
 bot.run(token)
