@@ -1,0 +1,2 @@
+Looking in indexes: https://package-proxy.replit.com/pypi/simple/
+Requirement already satisfied: aiohttp in ./venv/lib/python3.8/site-packages (3.7.4.post0)
