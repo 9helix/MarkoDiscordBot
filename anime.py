@@ -43,6 +43,9 @@ class anime:
         if self.score != "N/A":
             self.score += "  ⭐"
         self.name = soup.find("h1", {"class": "title-name h1_bold_none"}).text
+        if soup.find("p", {"class": "title-english title-inherit"}) != None:
+            self.name = soup.find(
+                "p", {"class": "title-english title-inherit"}).text
         self.tag = self.url[30:35]
         image = soup.find("img", {"itemprop": "image"})['data-src']
         self.cover_url = image

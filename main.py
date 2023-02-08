@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 from discord import app_commands
 from discord.ext import commands, tasks
 import datetime
-from keep_alive import keep_alive
+# from keep_alive import keep_alive
 
 from anime import *
 
@@ -306,13 +306,11 @@ async def self(interaction: discord.Interaction, code: str):
     if not code.isdigit() and "myanimelist.net" not in code:
         code = [x.lower() for x in code.split()]
         for tag in anime_dict:
-            tag2 = tuple([x.lower() for x in tag.split()])
-            for word in code:
-                if word in tag2:
-                    code = anime_dict[tag]
-                    break
-            if word in tag2:
+            tag2 = [x.lower() for x in tag.split()]
+            if all(a in tag2 for a in code):
+                code = anime_dict[tag]
                 break
+
     elif code.isdigit():
         code = "https://myanimelist.net/anime/"+code
     elif "https://" not in code:
@@ -322,10 +320,10 @@ async def self(interaction: discord.Interaction, code: str):
     show = anime(code)
     try:
         show.fetch_data()
-
-        anime_dict[show.name] = show.url
-        with open('database/anime_dict.pkl', 'wb') as f:
-            pickle.dump(anime_dict, f)
+        if show.name not in anime_dict:
+            anime_dict[show.name] = show.url
+            with open('database/anime_dict.pkl', 'wb') as f:
+                pickle.dump(anime_dict, f)
         # await interaction.response.send_message(show.__str__())
         out = discord.Embed(title=show.name,
                             description=show.__str__(),
@@ -400,7 +398,7 @@ async def self(interaction: discord.Interaction, code: str):
                             else:
                                 subbed = True
                                 # print(f"{show.name} anime is already followed.")
-                                await interaction.followup.send(f"You are already subsribed to **{show.name}**.")
+                                await interaction.followup.send(f"You are already subscribed to **{show.name}**.")
             if not subbed:
                 release_times = [x for x in follow_dict]
                 print("release_times", release_times, "\n", follow_dict)
@@ -415,8 +413,8 @@ async def self(interaction: discord.Interaction, code: str):
                           follow_dict, type(follow_dict), type(interaction.user))
                     pickle.dump(follow_dict, f)
                 print(
-                    f"Successfully subsribed to {show.name}.")
-                await interaction.followup.send(f"Successfully subsribed to **{show.name}**.")
+                    f"Successfully subscribed to {show.name}.")
+                await interaction.followup.send(f"Successfully subscribed to **{show.name}**.")
             elif "Finished Airing" in show.status:
                 print(f"{show.name} anime is already finished.")
                 await interaction.followup.send(f"**{show.name}** anime is already finished.")
@@ -765,5 +763,5 @@ async def on_command_error(ctx, error):
         await ctx.send("Unknown command.")
 
 
-keep_alive()
+# keep_alive()
 bot.run(token)
