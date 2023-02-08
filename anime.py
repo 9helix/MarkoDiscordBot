@@ -76,7 +76,8 @@ class anime:
 
             elif i.text == "Episodes:":
                 episodes = i.parent.text
-                self.max_episodes = int(episodes[13:-3])
+                if episodes[13:-3]!="Unknown":
+                    self.max_episodes = int(episodes[13:-3])
 
             elif i.text == "Status:":
                 status = i.parent.text

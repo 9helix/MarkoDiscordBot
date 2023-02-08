@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 from discord import app_commands
 from discord.ext import commands, tasks
 import datetime
-# from keep_alive import keep_alive
+from keep_alive import keep_alive
 
 from anime import *
 
@@ -22,12 +22,17 @@ astro = datetime.time(hour=12, minute=0, tzinfo=utc)
 
 bot = commands.Bot(command_prefix='-', intents=discord.Intents.all())
 
-config = configparser.ConfigParser()
-config.read('secret.ini')
-admin = config["DEFAULT"].getint('admin_id')
-my_channel = config["DEFAULT"].getint('my_channel')
-token = config["DEFAULT"]['token']
-
+try:
+    config = configparser.ConfigParser()
+    config.read('secret.ini')
+    admin = config["DEFAULT"].getint('admin_id')
+    my_channel = config["DEFAULT"].getint('my_channel')
+    token = config["DEFAULT"]['token'] 
+except:
+    my_channel = int(os.environ['my_channel'])
+    token = os.environ['token']
+    admin = int(os.environ['admin_id'])
+    
 f = open('database/devs.txt', 'a+')
 f.seek(0)
 devs = [user[:-1] for user in f.readlines()]
@@ -448,9 +453,9 @@ async def self(interaction: discord.Interaction):
                     string = ""
                     for i in users:
                         if users.index(i) == len(users)-1:
-                            string += f"{i.name+i.discriminator}"
+                            string += f"{i.name+'#'+i.discriminator}"
                         else:
-                            string += f"{i.name+i.discriminator}, "
+                            string += f"{i.name+'#'+i.discriminator}, "
                     msg += f"{anime} - {string}\n"
 
     else:
@@ -675,7 +680,7 @@ async def self(interaction: discord.Interaction):
         print(str(interaction.channel_id))
         f.close()
         await interaction.response.send_message('Restarting...')
-        os.system("clear")
+        #os.system("clear")
         os.execv(sys.executable, ['python'] + sys.argv)
     else:
         await interaction.response.send_message(
@@ -763,5 +768,5 @@ async def on_command_error(ctx, error):
         await ctx.send("Unknown command.")
 
 
-# keep_alive()
+keep_alive()
 bot.run(token)
