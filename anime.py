@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup as bs
 import datetime
 import pickle
 from discord import Color
+import time as ti
 
 genres = {"Action": Color.brand_red(), "Adventure": Color.orange(), "Comedy": Color.gold(), "Drama": Color.purple(), "Sci-Fi": Color.green(), "Fantasy": Color.brand_green(),
           "Horror": Color.darker_grey(), "Romance": Color.fuchsia(), "Mystery": Color.dark_teal(), "Sports": Color.blue(), "Supernatural": Color.dark_green(), "Slice of Life": Color.yellow()}
@@ -32,7 +33,7 @@ class anime:
 
         self.weekday = 0
         self.start = 0
-    #
+    
 
     def fetch_data(self):
         page = requests.get(self.url)
@@ -116,6 +117,9 @@ class anime:
             # self.cur_episodes = cur_episodes+1
             time_left = datetime.timedelta(days=(self.cur_episodes)*7) - \
                 (datetime.datetime.utcnow()-start)
+            countdown2=datetime.timedelta(days=(self.cur_episodes)*7)+start
+            self.unix_countdown2=int(ti.mktime(countdown2.timetuple()))
+            self.unix_countdown2=f"\n\nEpisode {self.cur_episodes+1} <t:{self.unix_countdown2}:R>."
             countdown = "\n\nNext episode in: "
             days = time_left.days
             self.time = (start, self.cur_episodes, self.name,
@@ -140,7 +144,7 @@ class anime:
             self.status += "  🟡"
 
     def __str__(self):
-        return f"Score: {self.score}\nEpisodes: {self.episodes}\nStatus: {self.status}\nAiring: {self.airing}\n{f'Season: {self.season}'+newline if f'{self.season}'!='Unknown' else ''}Broadcast: {self.broadcast}\nGenre: {self.genre}\nStudio: {self.studio}\nURL: {self.url}{self.countdown}"
+        return f"Score: {self.score}\nEpisodes: {self.episodes}\nStatus: {self.status}\nAiring: {self.airing}\n{f'Season: {self.season}'+newline if f'{self.season}'!='Unknown' else ''}Broadcast: {self.broadcast}\nGenre: {self.genre}\nStudio: {self.studio}\nURL: {self.url}{self.unix_countdown2}"
 
 
 """
