@@ -31,6 +31,7 @@ class anime:
         self.score = "N/A"
         self.max_episodes = 0
 
+        self.unix_countdown2=""
         self.weekday = 0
         self.start = 0
     

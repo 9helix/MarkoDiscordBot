@@ -3,7 +3,7 @@ import json
 import os
 import random
 import sys
-
+import string
 import configparser
 
 import discord
@@ -309,9 +309,9 @@ async def self(interaction: discord.Interaction, code: str):
     with open('database/anime_dict.pkl', 'rb') as f:
         anime_dict = pickle.load(f)
     if not code.isdigit() and "myanimelist.net" not in code:
-        code = [x.lower() for x in code.split()]
+        code = [x.lower() for x in code.translate(str.maketrans('', '', string.punctuation)).split()]
         for tag in anime_dict:
-            tag2 = [x.lower() for x in tag.split()]
+            tag2 = [x.lower() for x in tag.translate(str.maketrans('', '', string.punctuation)).split()]
             if all(a in tag2 for a in code):
                 code = anime_dict[tag]
                 break
