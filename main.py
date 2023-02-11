@@ -27,12 +27,12 @@ try:
     config.read('secret.ini')
     admin = config["DEFAULT"].getint('admin_id')
     my_channel = config["DEFAULT"].getint('my_channel')
-    token = config["DEFAULT"]['token'] 
+    token = config["DEFAULT"]['token']
 except:
     my_channel = int(os.environ['my_channel'])
     token = os.environ['token']
     admin = int(os.environ['admin_id'])
-    
+
 f = open('database/devs.txt', 'a+')
 f.seek(0)
 devs = [user[:-1] for user in f.readlines()]
@@ -249,31 +249,34 @@ class mirko(discord.Client):
 
     @tasks.loop(time=release_times)
     async def anime_follow(self):
+        now = datetime.datetime.now(utc)
         print('anime_follow being executed', self.anime_follow.time)
 
         with open('database/follow_dict.pkl', 'rb') as f:
             follow_dict = pickle.load(f)
-        cur_time_index = self.anime_follow.current_loop % len(
-            self.anime_follow.time)-1
-        cur_weekday = datetime.datetime.now().isoweekday()
-        self.anime_follow.change_interval(time=list(follow_dict.keys()))
-        time = self.anime_follow.time[cur_time_index]
-        if cur_weekday in follow_dict[time]:
-            for anime in follow_dict[time][cur_weekday]:
+        # cur_time_index = self.anime_follow.current_loop % len(
+        #    self.anime_follow.time)-1
+        cur_weekday = now.isoweekday()
+        now = datetime.time(hour=now.hour, minute=now.minute, tzinfo=utc)
+        # self.anime_follow.change_interval(time=list(follow_dict.keys()))
+
+        # time = self.anime_follow.time[cur_time_index]
+        if cur_weekday in follow_dict[now]:  # time je bio prije umjesto now
+            for anime in follow_dict[now][cur_weekday]:
                 for user in anime[2]:
                     await bot.get_user(user).send(f"Episode {anime[0]+1} of {anime} is out!")
                 if anime[0]+1 == anime[1]:
-                    follow_dict[time][cur_weekday].pop(anime)
-                    if follow_dict[time][cur_weekday] == {}:
-                        follow_dict[time].pop(cur_weekday)
-                        if follow_dict[time] == {}:
-                            follow_dict.pop(time)
+                    follow_dict[now][cur_weekday].pop(anime)
+                    if follow_dict[now][cur_weekday] == {}:
+                        follow_dict[now].pop(cur_weekday)
+                        if follow_dict[now] == {}:
+                            follow_dict.pop(now)
                             if follow_dict == {}:
                                 self.anime_follow.stop()
                 else:
-                    follow_dict[time][cur_weekday][anime][0] += 1
-        with open('database/follow_dict.pkl', 'wb') as f:
-            pickle.dump(follow_dict, f)
+                    follow_dict[now][cur_weekday][anime][0] += 1
+            with open('database/follow_dict.pkl', 'wb') as f:
+                pickle.dump(follow_dict, f)
 
     @anime_follow.before_loop
     async def before_anime_follow(self):
@@ -309,9 +312,11 @@ async def self(interaction: discord.Interaction, code: str):
     with open('database/anime_dict.pkl', 'rb') as f:
         anime_dict = pickle.load(f)
     if not code.isdigit() and "myanimelist.net" not in code:
-        code = [x.lower() for x in code.translate(str.maketrans('', '', string.punctuation)).split()]
+        code = [x.lower() for x in code.translate(
+            str.maketrans('', '', string.punctuation)).split()]
         for tag in anime_dict:
-            tag2 = [x.lower() for x in tag.translate(str.maketrans('', '', string.punctuation)).split()]
+            tag2 = [x.lower() for x in tag.translate(
+                str.maketrans('', '', string.punctuation)).split()]
             if all(a in tag2 for a in code):
                 code = anime_dict[tag]
                 break
@@ -680,7 +685,7 @@ async def self(interaction: discord.Interaction):
         print(str(interaction.channel_id))
         f.close()
         await interaction.response.send_message('Restarting...')
-        #os.system("clear")
+        # os.system("clear")
         os.execv(sys.executable, ['python'] + sys.argv)
     else:
         await interaction.response.send_message(

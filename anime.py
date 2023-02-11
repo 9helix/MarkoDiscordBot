@@ -31,10 +31,9 @@ class anime:
         self.score = "N/A"
         self.max_episodes = 0
 
-        self.unix_countdown2=""
+        self.unix_countdown2 = ""
         self.weekday = 0
         self.start = 0
-    
 
     def fetch_data(self):
         page = requests.get(self.url)
@@ -78,7 +77,7 @@ class anime:
 
             elif i.text == "Episodes:":
                 episodes = i.parent.text
-                if episodes[13:-3]!="Unknown":
+                if episodes[13:-3] != "Unknown":
                     self.max_episodes = int(episodes[13:-3])
 
             elif i.text == "Status:":
@@ -118,9 +117,9 @@ class anime:
             # self.cur_episodes = cur_episodes+1
             time_left = datetime.timedelta(days=(self.cur_episodes)*7) - \
                 (datetime.datetime.utcnow()-start)
-            countdown2=datetime.timedelta(days=(self.cur_episodes)*7)+start
-            self.unix_countdown2=int(ti.mktime(countdown2.timetuple()))
-            self.unix_countdown2=f"\n\nEpisode {self.cur_episodes+1} <t:{self.unix_countdown2}:R>."
+            countdown2 = datetime.timedelta(days=(self.cur_episodes)*7)+start
+            self.unix_countdown2 = int(ti.mktime(countdown2.timetuple()))
+            self.unix_countdown2 = f"\n\nEpisode {self.cur_episodes+1}: <t:{self.unix_countdown2}:R>."
             countdown = "\n\nNext episode in: "
             days = time_left.days
             self.time = (start, self.cur_episodes, self.name,
