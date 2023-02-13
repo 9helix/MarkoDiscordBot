@@ -1,6 +1,5 @@
 pkl_create.py
 secret.ini
-database/
 venv/
 __pycache__/
 .breakpoints

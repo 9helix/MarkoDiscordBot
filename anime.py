@@ -1,7 +1,6 @@
 import requests
 from bs4 import BeautifulSoup as bs
 import datetime
-import pickle
 from discord import Color
 import time as ti
 
