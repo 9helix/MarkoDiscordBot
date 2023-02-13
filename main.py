@@ -173,15 +173,30 @@ def read_follow():
     with open('database/follow_dict.pkl', 'rb') as f:
         follow_dict = pickle.load(f)
         return follow_dict
-        
-if read_follow()!={}:
-    follow_dict=read_follow()
+
+
+def read_anime():
+    with open('database/anime_dict.pkl', 'rb') as f:
+        anime_dict = pickle.load(f)
+        return anime_dict
+
+
+def write_follow(follow_dict):
+    with open('database/follow_dict.pkl', 'wb') as f:
+        pickle.dump(follow_dict, f)
+
+
+anime_dict = read_anime()
+if read_follow() != {}:
+    follow_dict = read_follow()
     for time in follow_dict:
         for day in follow_dict[time]:
             for serie in follow_dict[time][day]:
-                show = anime(code)
+                show = anime(anime_dict[serie])
                 show.fetch_data()
-                
+                follow_dict[time][day][serie][0] = show.cur_episodes
+    write_follow(follow_dict)
+
 
 class mirko(discord.Client):
     def __init__(self):
@@ -267,7 +282,7 @@ class mirko(discord.Client):
         cur_weekday = now.isoweekday()
         now = datetime.time(hour=now.hour, minute=now.minute, tzinfo=utc)
         # self.anime_follow.change_interval(time=list(follow_dict.keys()))
-        print(follow_dict.keys())
+        print(follow_dict.keys(), now, now in follow_dict)
         # time = self.anime_follow.time[cur_time_index]
         if cur_weekday in follow_dict[now]:  # time je bio prije umjesto now
             for anime in follow_dict[now][cur_weekday]:
