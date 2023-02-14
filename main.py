@@ -272,7 +272,7 @@ class mirko(discord.Client):
 
     @tasks.loop(time=release_times)
     async def anime_follow(self):
-        now = datetime.datetime.now(utc)
+        now = datetime.datetime.utcnow()
         print('anime_follow being executed', self.anime_follow.time)
 
         with open('database/follow_dict.pkl', 'rb') as f:
@@ -280,7 +280,7 @@ class mirko(discord.Client):
         # cur_time_index = self.anime_follow.current_loop % len(
         #    self.anime_follow.time)-1
         cur_weekday = now.isoweekday()
-        now = datetime.time(hour=now.hour, minute=now.minute, tzinfo=utc)
+        now = datetime.time(hour=now.hour, minute=now.minute)
         # self.anime_follow.change_interval(time=list(follow_dict.keys()))
         print(follow_dict.keys(), now, now in follow_dict)
         # time = self.anime_follow.time[cur_time_index]
