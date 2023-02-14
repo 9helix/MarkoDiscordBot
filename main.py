@@ -71,6 +71,7 @@ def check(value):
 
 
 def check2(value):
+    print(value)
     if int(value) < 450:
         return 'Normal speed'
     elif 700 > int(value) >= 450:
@@ -122,8 +123,10 @@ def sun_find():
         data_dict2 = json.loads(response2.text)
 
         spd_val = data_dict2['val']
-
-        desc += f'\nSolar wind speed: **{spd_val}** km/sec - **{check2(spd_val)}**'
+        if spd_val!="-":
+            desc += f'\nSolar wind speed: **{spd_val}** km/sec - **{check2(spd_val)}**'
+        else:
+            desc+="Unknown solar wind speed."
     else:
         desc += "\nCouldn't fetch data for solar wind speed."
     if '*' not in desc:
