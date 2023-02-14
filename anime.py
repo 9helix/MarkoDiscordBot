@@ -30,7 +30,7 @@ class anime:
         self.score = "N/A"
         self.max_episodes = 0
 
-        self.unix_countdown2 = ""
+        self.unix_countdown = ""
         self.weekday = 0
         self.start = 0
 
@@ -113,29 +113,11 @@ class anime:
             start = datetime.datetime.strptime(time, '%b %d, %Y %H:%M')
             start = start - datetime.timedelta(hours=9)
             self.cur_episodes = (datetime.datetime.utcnow()-start).days//7+1
-            # self.cur_episodes = cur_episodes+1
-            time_left = datetime.timedelta(days=(self.cur_episodes)*7) - \
-                (datetime.datetime.utcnow()-start)
-            countdown2 = datetime.timedelta(days=(self.cur_episodes)*7)+start
-            self.unix_countdown2 = int(ti.mktime(countdown2.timetuple()))
-            self.unix_countdown2 = f"\n\nEpisode {self.cur_episodes+1}: <t:{self.unix_countdown2}:R>."
-            countdown = "\n\nNext episode in: "
-            days = time_left.days
-            self.time = (start, self.cur_episodes, self.name,
-                         self.max_episodes, self.tag, broadcast_hour)
-            self.secs_left = time_left.seconds+days*86400
-            if days > 0:
-                countdown += str(days)+" days, "
-            hours = time_left.seconds//3600
-            if hours > 0:
-                countdown += str(hours)+" hours, "
-            minutes = (time_left.seconds % 3600)//60
-            if minutes > 0:
-                countdown += str(minutes)+" minutes"
-            """ seconds = (time_left.seconds % 3600) % 60
-            if seconds > 0:
-                countdown += str(seconds)+" seconds" """
-            self.countdown = countdown+"."
+
+            countdown = datetime.timedelta(days=(self.cur_episodes)*7)+start
+            self.unix_countdown = int(ti.mktime(countdown.timetuple()))
+            self.unix_countdown = f"\n\nEpisode {self.cur_episodes+1}: <t:{self.unix_countdown}:R>."
+
             self.episodes = f"{self.cur_episodes}/{self.max_episodes}"
         elif self.status == "Finished Airing":
             self.status += "  🔴"
@@ -143,7 +125,7 @@ class anime:
             self.status += "  🟡"
 
     def __str__(self):
-        return f"Score: {self.score}\nEpisodes: {self.episodes}\nStatus: {self.status}\nAiring: {self.airing}\n{f'Season: {self.season}'+newline if f'{self.season}'!='Unknown' else ''}Broadcast: {self.broadcast}\nGenre: {self.genre}\nStudio: {self.studio}\nURL: {self.url}{self.unix_countdown2}"
+        return f"Score: {self.score}\nEpisodes: {self.episodes}\nStatus: {self.status}\nAiring: {self.airing}\n{f'Season: {self.season}'+newline if f'{self.season}'!='Unknown' else ''}Broadcast: {self.broadcast}\nGenre: {self.genre}\nStudio: {self.studio}\nURL: {self.url}{self.unix_countdown}"
 
 
 """
