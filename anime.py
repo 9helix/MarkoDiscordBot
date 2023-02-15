@@ -124,9 +124,11 @@ class anime:
             start = datetime.datetime.strptime(time, '%b %d, %Y %H:%M')
             start = start - datetime.timedelta(hours=9)
             self.cur_episodes = (datetime.datetime.utcnow()-start).days//7+1
+            offset=0
             if self.name in pkl_read("delays"):
+                offset=pkl_read("delays")[self.name]
                 self.cur_episodes -= pkl_read("delays")[self.name]
-            countdown = datetime.timedelta(days=(self.cur_episodes)*7)+start
+            countdown = datetime.timedelta(days=((self.cur_episodes)+offset)*7)+start
             self.unix_countdown = int(ti.mktime(countdown.timetuple()))
             self.unix_countdown = f"\n\nEpisode {self.cur_episodes+1}: <t:{self.unix_countdown}:R>."
 
