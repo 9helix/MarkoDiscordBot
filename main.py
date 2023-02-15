@@ -347,7 +347,6 @@ async def self(interaction: discord.Interaction, code: str):
         out.set_image(url=show.cover_url)
         await interaction.followup.send(embed=out)
     except Exception as e:
-        print(e)
         await interaction.followup.send("Invalid URL, code or anime name.")
 
 
@@ -439,7 +438,6 @@ async def self(interaction: discord.Interaction, code: str):
                     pass  # follow anime schedule din future
 
         except Exception as e:
-            print(e)
             await interaction.response.send_message("Invalid URL, code or anime name.")
     else:
         await interaction.followup.send("Invalid URL, code or anime name.")
@@ -505,7 +503,6 @@ async def self(interaction: discord.Interaction, code: str):
             pkl_write("follow_dict", follow_dict)
         await interaction.followup.send(f"{show.name} delayed by 1 episode.")
     except Exception as e:
-        print(e)
         await interaction.followup.send("Invalid URL, code or anime name.")
 
 
@@ -614,7 +611,6 @@ async def self(interaction: discord.Interaction, user: discord.Member):
                 await interaction.response.send_message(
                     f'User <@{user.id}> unblocked.')
         except Exception as e:
-            # print(e)
             await interaction.response.send_message('Unknown user.')
     else:
         interaction.response.send_message('Only devs can use this command.')
@@ -745,7 +741,6 @@ async def self(interaction: discord.Interaction, user: discord.User):
                 await interaction.response.send_message(
                     f'Successfully added user <@{user.id}> as a dev.')
         except Exception as e:
-            # print(e)
             await interaction.response.send_message('Unknown user.')
     else:
         await interaction.response.send_message(
@@ -774,7 +769,6 @@ async def self(interaction: discord.Interaction, user: discord.User):
                 await interaction.response.send_message(
                     f'User <@{user.id}> removed as a dev.')
         except Exception as e:
-            # print(e)
             await interaction.response.send_message('Unknown user.')
     else:
         interaction.response.send_message('Only devs can use this command.')
