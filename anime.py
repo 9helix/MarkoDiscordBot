@@ -3,6 +3,19 @@ from bs4 import BeautifulSoup as bs
 import datetime
 from discord import Color
 import time as ti
+import pickle
+
+
+def pkl_read(name):
+    with open(f'database/{name}.pkl', 'rb') as f:
+        data = pickle.load(f)
+        return data
+
+
+def pkl_write(name, data):
+    with open(f'database/{name}.pkl', 'wb') as f:
+        pickle.dump(data, f)
+
 
 genres = {"Action": Color.brand_red(), "Adventure": Color.orange(), "Comedy": Color.gold(), "Drama": Color.purple(), "Sci-Fi": Color.green(), "Fantasy": Color.brand_green(),
           "Horror": Color.darker_grey(), "Romance": Color.fuchsia(), "Mystery": Color.dark_teal(), "Sports": Color.blue(), "Supernatural": Color.dark_green(), "Slice of Life": Color.yellow()}
@@ -98,14 +111,12 @@ class anime:
                 genre1 = i.findNext("span").text
 
                 genre2 = i.findNext("span").findNext("span").text
-                # print(genre1, genre2)
                 self.genre1 = genre1
                 if genre2 in genres:
                     self.genre = f"{genre1}, {genre2}"
                 else:
                     self.genre = genre1
                 break
-                # self.season = premiered[12:-1]
 
         if self.status == "Currently Airing":
             self.status += "  🟢"
@@ -113,7 +124,8 @@ class anime:
             start = datetime.datetime.strptime(time, '%b %d, %Y %H:%M')
             start = start - datetime.timedelta(hours=9)
             self.cur_episodes = (datetime.datetime.utcnow()-start).days//7+1
-
+            if self.name in pkl_read("delays"):
+                self.cur_episodes -= pkl_read("delays")[self.name]
             countdown = datetime.timedelta(days=(self.cur_episodes)*7)+start
             self.unix_countdown = int(ti.mktime(countdown.timetuple()))
             self.unix_countdown = f"\n\nEpisode {self.cur_episodes+1}: <t:{self.unix_countdown}:R>."
@@ -126,21 +138,3 @@ class anime:
 
     def __str__(self):
         return f"Score: {self.score}\nEpisodes: {self.episodes}\nStatus: {self.status}\nAiring: {self.airing}\n{f'Season: {self.season}'+newline if f'{self.season}'!='Unknown' else ''}Broadcast: {self.broadcast}\nGenre: {self.genre}\nStudio: {self.studio}\nURL: {self.url}{self.unix_countdown}"
-
-
-"""
-url = "https://myanimelist.net/anime/52635/Kami_no_Tou_2nd_Season?q=tower%20of%20god&cat=anime"
-show = anime(url)
-show.fetch_data()
-print(show)"""
-
-"""
-with open('database/anime_dict.pkl', 'rb') as f:
-    anime_dict = pickle.load(f)
-
-#anime_dict[show.tag] = show.url
-with open('database/anime_dict.pkl', 'wb') as f:
-    pickle.dump(anime_dict, f)
-for item in anime_dict:
-    print(item, anime_dict[item])"""
-# print(show)

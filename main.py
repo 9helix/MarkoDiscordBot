@@ -4,7 +4,6 @@ import random
 import sys
 import string
 import configparser
-import pickle
 import discord
 import requests
 from bs4 import BeautifulSoup
@@ -123,10 +122,10 @@ def sun_find():
         data_dict2 = json.loads(response2.text)
 
         spd_val = data_dict2['val']
-        if spd_val!="-":
+        if spd_val != "-":
             desc += f'\nSolar wind speed: **{spd_val}** km/sec - **{check2(spd_val)}**'
         else:
-            desc+="Unknown solar wind speed."
+            desc += "Unknown solar wind speed."
     else:
         desc += "\nCouldn't fetch data for solar wind speed."
     if '*' not in desc:
@@ -172,33 +171,17 @@ def moon_find():
     return embed
 
 
-def read_follow():
-    with open('database/follow_dict.pkl', 'rb') as f:
-        follow_dict = pickle.load(f)
-        return follow_dict
-
-
-def read_anime():
-    with open('database/anime_dict.pkl', 'rb') as f:
-        anime_dict = pickle.load(f)
-        return anime_dict
-
-
-def write_follow(follow_dict):
-    with open('database/follow_dict.pkl', 'wb') as f:
-        pickle.dump(follow_dict, f)
-
-
-anime_dict = read_anime()
-if read_follow() != {}:
-    follow_dict = read_follow()
+# updating episode count
+anime_dict = pkl_read("anime_dict")
+if pkl_read("follow_dict") != {}:
+    follow_dict = pkl_read("follow_dict")
     for time in follow_dict:
         for day in follow_dict[time]:
             for serie in follow_dict[time][day]:
                 show = anime(anime_dict[serie])
                 show.fetch_data()
                 follow_dict[time][day][serie][0] = show.cur_episodes
-    write_follow(follow_dict)
+    pkl_write("follow_dict", follow_dict)
 
 
 class mirko(discord.Client):
@@ -219,17 +202,16 @@ class mirko(discord.Client):
         self.ch_pr.start()
         self.bg_task = self.loop.create_task(self.reboot_task())
         self.astro_newsletter.start()
-        if read_follow() != {}:
-            self.anime_follow.change_interval(time=[x for x in read_follow()])
+        if pkl_read("follow_dict") != {}:
+            self.anime_follow.change_interval(
+                time=[x for x in pkl_read("follow_dict")])
             self.anime_follow.start()
             print('anime_follow started since its not empty',
                   self.anime_follow.time)
 
     async def reboot_task(self):
         await self.wait_until_ready()
-        # print(f"Logged in as {bot.user}")
         f = open('database/reboot.txt', 'r+')
-        # print(str(f.read()),f.read()=='',f.read())    #f.read()==''
         line = f.readline()
         if line != '':
             await bot.get_channel(int(line)).send('Reboot successful!')
@@ -253,7 +235,6 @@ class mirko(discord.Client):
     @astro_newsletter.before_loop
     async def before_astro_newsletter(self):
         await self.wait_until_ready()
-        # await asyncio.sleep(timer(hr=12))
 
     @tasks.loop(seconds=60)
     async def ch_pr(self):
@@ -328,7 +309,7 @@ async def self(interaction: discord.Interaction):
             # <[link]> for disabling embed creation for links
             msg += f"{item} - <{anime_dict[item]}>\n"
     else:
-        msg = "Anime list is currently empty. Use **/anime** command to add anime to it."
+        msg = "Anime list is currently empty. Use `/anime` command to add anime to it."
     await interaction.response.send_message(msg)
 
 
@@ -360,12 +341,10 @@ async def self(interaction: discord.Interaction, code: str):
             anime_dict[show.name] = show.url
             with open('database/anime_dict.pkl', 'wb') as f:
                 pickle.dump(anime_dict, f)
-        # await interaction.response.send_message(show.__str__())
         out = discord.Embed(title=show.name,
                             description=show.__str__(),
                             color=genres[show.genre1])
         out.set_image(url=show.cover_url)
-        # await interaction.response.send_message(embed=out)
         await interaction.followup.send(embed=out)
     except Exception as e:
         print(e)
@@ -433,7 +412,6 @@ async def self(interaction: discord.Interaction, code: str):
 
                             else:
                                 subbed = True
-                                # print(f"{show.name} anime is already followed.")
                                 await interaction.followup.send(f"You are already subscribed to **{show.name}**.")
             if not subbed:
                 release_times = [x for x in follow_dict]
@@ -456,12 +434,9 @@ async def self(interaction: discord.Interaction, code: str):
                 await interaction.followup.send(f"**{show.name}** anime is already finished.")
             else:  # elif "Not yet aired" in show.status:
                 if show.broadcast == "Unknown":
-                    # print(f"{show.name} anime wasn't yet released.")
                     await interaction.followup.send(f"**{show.name}** anime wasn't yet released.")
                 else:
                     pass  # follow anime schedule din future
-
-                # discord.DMchannel.send
 
         except Exception as e:
             print(e)
@@ -490,8 +465,48 @@ async def self(interaction: discord.Interaction):
                     msg += f"{anime} - {string}\n"
 
     else:
-        msg = "Follow list is currently empty. Use **/follow** command to add anime to it."
+        msg = "Follow list is currently empty. Use `/follow` command to add anime to it."
     await interaction.response.send_message(msg)
+
+
+@tree.command(name='delay_anime', description="Delays anime by 1 week. Use code, MAL URL or anime name to get data.")
+async def self(interaction: discord.Interaction, code: str):
+    await interaction.response.defer(ephemeral=False)
+    with open('database/anime_dict.pkl', 'rb') as f:
+        anime_dict = pickle.load(f)
+    if not code.isdigit() and "myanimelist.net" not in code:
+        code = [x.lower() for x in code.translate(
+            str.maketrans('', '', string.punctuation)).split()]
+        for tag in anime_dict:
+            tag2 = [x.lower() for x in tag.translate(
+                str.maketrans('', '', string.punctuation)).split()]
+            if all(a in tag2 for a in code):
+                code = anime_dict[tag]
+                break
+
+    elif code.isdigit():
+        code = "https://myanimelist.net/anime/"+code
+    elif "https://" not in code:
+        code = "https://"+code
+    if "myanimelist.net" in code:
+        code = code[:35]
+    show = anime(code)
+    try:
+        show.fetch_data()
+        delay_dict = pkl_read("delays")
+        if show.name not in delay_dict:
+            delay_dict[show.name] = 1
+        else:
+            delay_dict[show.name] += 1
+        pkl_write("delays", delay_dict)
+        if show.start in pkl_read("follow_dict"):
+            follow_dict = pkl_read("follow_dict")
+            follow_dict[show.start][show.weekday][show.name][0] -= 1
+            pkl_write("follow_dict", follow_dict)
+        await interaction.followup.send(f"{show.name} delayed by 1 episode.")
+    except Exception as e:
+        print(e)
+        await interaction.followup.send("Invalid URL, code or anime name.")
 
 
 @tree.command(name='anime_clear', description="Empties anime list.")
@@ -561,7 +576,6 @@ def block_read():
 async def self(interaction: discord.Interaction, user: discord.Member):
     if interaction.user.id in devs:
         try:
-            # user = bot.get_user(user)
             f = open('database/blocked.txt', 'a+')
             f.seek(0)
             if str(user.id) + '\n' in f.readlines():
@@ -584,12 +598,10 @@ async def self(interaction: discord.Interaction, user: discord.Member):
 async def self(interaction: discord.Interaction, user: discord.Member):
     if interaction.user.id in devs:
         try:
-            # user = bot.get_user(user)
             f = open('database/blocked.txt', 'a+')
             f.seek(0)
             lines = f.readlines()
             f.close()
-            # print(lines, str(user.id)+'\n')
             if str(user.id) + '\n' not in lines:
                 await interaction.response.send_message(
                     f'User <@{user.id}> is already unblocked.')
@@ -683,8 +695,6 @@ async def self(interaction: discord.Interaction,
 @tree.command(name='img', description='Sends a random image from the database')
 async def self(interaction: discord.Interaction):
     imgs = os.listdir(r'database/images')
-    # imgs.remove('mauro.png')
-    # imgs.remove('therock.gif')
     await interaction.response.send_message(
         file=discord.File(rf'database/images/{random.choice(imgs)}'))
 
@@ -752,7 +762,6 @@ async def self(interaction: discord.Interaction, user: discord.User):
             f.seek(0)
             lines = f.readlines()
             f.close()
-            # print(lines, str(user.id)+'\n')
             if str(user.id) + '\n' not in lines:
                 await interaction.response.send_message(
                     f'User <@{user.id}> isn\'t dev.')
@@ -775,7 +784,7 @@ async def self(interaction: discord.Interaction, user: discord.User):
 async def self(interaction: discord.Interaction):
     embed = discord.Embed(
         title='Mirko Bot Komande',
-        description=' \n**-img**   \nšalje random sliku iz baze podataka \n\n  **-pong**  \n šalje Mirkov ping \n\n  **-dm user_id "poruka"**  \nšalje poruku u DM, ako nema id-a poruka se šalje pošiljatelju poruke \n\n  **-sun**  \n šalje podatke o trenutnoj Sunčevoj aktivnosti \n\n  **-moon**  \n šalje trenutnu osvjetljenost Mjeseca',
+        description=' \n`/img`   \nšalje random sliku iz baze podataka \n\n  `/pong`  \n šalje Mirkov ping \n\n  `/dm user_id "poruka"`  \nšalje poruku u DM, ako nema id-a poruka se šalje pošiljatelju poruke \n\n  `/sun`  \n šalje podatke o trenutnoj Sunčevoj aktivnosti \n\n  `/moon`  \n šalje trenutnu osvjetljenost Mjeseca',
         color=discord.Colour.red(),
     )
     embed.set_author(
