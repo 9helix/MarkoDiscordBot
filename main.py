@@ -207,7 +207,7 @@ class mirko(discord.Client):
                 time=[x for x in pkl_read("follow_dict")])
             self.anime_follow.start()
             print('anime_follow started since its not empty',
-                  self.anime_follow.time)
+                  pkl_read("follow_dict"))
 
     async def reboot_task(self):
         await self.wait_until_ready()
@@ -269,6 +269,7 @@ class mirko(discord.Client):
         print(follow_dict.keys(), now, now in follow_dict)
         # time = self.anime_follow.time[cur_time_index]
         if cur_weekday in follow_dict[now]:  # time je bio prije umjesto now
+            print("sending anime newsletter...")
             for anime in follow_dict[now][cur_weekday]:
                 for user in anime[2]:
                     await bot.get_user(user).send(f"Episode {anime[0]+1} of {anime} is out!")
