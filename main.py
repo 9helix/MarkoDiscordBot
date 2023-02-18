@@ -263,6 +263,27 @@ class mirko(discord.Client):
             follow_dict = pickle.load(f)
         # cur_time_index = self.anime_follow.current_loop % len(
         #    self.anime_follow.time)-1
+        anime_dict = pkl_read("anime_dict")
+        check_ep = False
+        check_anime = []
+        for time in follow_dict:
+            for day in follow_dict[time]:
+                for serie in follow_dict[time][day]:
+                    if follow_dict[time][day][serie][1] == "?":
+                        check_ep = True
+                        check_anime.append(serie)
+
+        if check_ep:
+            follow_dict = pkl_read("follow_dict")
+            for time in follow_dict:
+                for day in follow_dict[time]:
+                    for serie in follow_dict[time][day]:
+                        if serie in check_anime:
+                            show = anime(anime_dict[serie])
+                            show.fetch_data()
+                            follow_dict[time][day][serie][1] = show.max_episodes
+            pkl_write("follow_dict", follow_dict)
+
         cur_weekday = now.isoweekday()
         now = datetime.time(hour=now.hour, minute=now.minute)
         # self.anime_follow.change_interval(time=list(follow_dict.keys()))
@@ -272,8 +293,11 @@ class mirko(discord.Client):
             print("sending anime newsletter...")
             for anime in follow_dict[now][cur_weekday]:
                 for user in anime[2]:
-                    await bot.get_user(user).send(f"Episode {anime[0]+1} of {anime} is out!")
-                if anime[0]+1 == anime[1]:
+                    print(user)
+                    user = bot.get_user(user)
+                    print(user)
+                    await user.send(f"Episode {anime[0]+1} of {anime} is out!")
+                if anime[1] != "?" and anime[0]+1 == anime[1]:
                     follow_dict[now][cur_weekday].pop(anime)
                     if follow_dict[now][cur_weekday] == {}:
                         follow_dict[now].pop(cur_weekday)
