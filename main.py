@@ -256,6 +256,7 @@ class mirko(discord.Client):
 
     @tasks.loop(time=release_times)
     async def anime_follow(self):
+        global anime
         now = datetime.datetime.utcnow()
         print('anime_follow being executed', self.anime_follow.time)
 
@@ -382,10 +383,12 @@ async def self(interaction: discord.Interaction, code: str):
     with open('database/anime_dict.pkl', 'rb') as f:
         anime_dict = pickle.load(f)
     if not code.isdigit() and "myanimelist.net" not in code:
-        code = [x.lower() for x in code.split()]
+        code = [x.lower() for x in code.translate(
+            str.maketrans('', '', string.punctuation)).split()]
         found = False
         for tag in anime_dict:
-            tag2 = tuple([x.lower() for x in tag.split()])
+            tag2 = [x.lower() for x in tag.translate(
+            str.maketrans('', '', string.punctuation)).split()]
             for word in code:
                 if word in tag2:
                     code = anime_dict[tag]
@@ -441,6 +444,7 @@ async def self(interaction: discord.Interaction, code: str):
                 release_times = [x for x in follow_dict]
                 print("release_times", release_times, "\n", follow_dict)
                 mirko.anime_follow.change_interval(time=release_times)
+                print(mirko.anime_follow.time)
                 if empty:
                     print("starting anime_follow task")
                     mirko.anime_follow.start()
@@ -460,7 +464,7 @@ async def self(interaction: discord.Interaction, code: str):
                 if show.broadcast == "Unknown":
                     await interaction.followup.send(f"**{show.name}** anime wasn't yet released.")
                 else:
-                    pass  # follow anime schedule din future
+                    pass  # follow anime scheduled in future
 
         except Exception as e:
             await interaction.response.send_message("Invalid URL, code or anime name.")
