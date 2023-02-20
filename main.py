@@ -258,10 +258,11 @@ class mirko(discord.Client):
     async def anime_follow(self):
         global anime
         now = datetime.datetime.utcnow()
-        print('anime_follow being executed', self.anime_follow.time)
+        
 
         with open('database/follow_dict.pkl', 'rb') as f:
             follow_dict = pickle.load(f)
+        print('anime_follow being executed',follow_dict)
         # cur_time_index = self.anime_follow.current_loop % len(
         #    self.anime_follow.time)-1
         anime_dict = pkl_read("anime_dict")
@@ -293,12 +294,12 @@ class mirko(discord.Client):
         if cur_weekday in follow_dict[now]:  # time je bio prije umjesto now
             print("sending anime newsletter...")
             for anime in follow_dict[now][cur_weekday]:
-                for user in anime[2]:
+                for user in follow_dict[now][cur_weekday][anime][2]:
                     print(user)
                     user = bot.get_user(user)
                     print(user)
-                    await user.send(f"Episode {anime[0]+1} of {anime} is out!")
-                if anime[1] != "?" and anime[0]+1 == anime[1]:
+                    await user.send(f"Episode {follow_dict[now][cur_weekday][anime][0]+1} of {anime} is out!")
+                if follow_dict[now][cur_weekday][anime][1] != "?" and follow_dict[now][cur_weekday][anime][0]+1 == follow_dict[now][cur_weekday][anime][1]:
                     follow_dict[now][cur_weekday].pop(anime)
                     if follow_dict[now][cur_weekday] == {}:
                         follow_dict[now].pop(cur_weekday)
