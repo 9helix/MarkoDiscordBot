@@ -258,11 +258,10 @@ class mirko(discord.Client):
     async def anime_follow(self):
         global anime
         now = datetime.datetime.utcnow()
-        
 
         with open('database/follow_dict.pkl', 'rb') as f:
             follow_dict = pickle.load(f)
-        print('anime_follow being executed',follow_dict)
+        print('anime_follow being executed', follow_dict)
         # cur_time_index = self.anime_follow.current_loop % len(
         #    self.anime_follow.time)-1
         anime_dict = pkl_read("anime_dict")
@@ -293,14 +292,14 @@ class mirko(discord.Client):
         # time = self.anime_follow.time[cur_time_index]
         if cur_weekday in follow_dict[now]:  # time je bio prije umjesto now
             print("sending anime newsletter...")
-            for anime in follow_dict[now][cur_weekday]:
-                for user in follow_dict[now][cur_weekday][anime][2]:
+            for anim in follow_dict[now][cur_weekday]:
+                for user in follow_dict[now][cur_weekday][anim][2]:
                     print(user)
                     user = bot.get_user(user)
                     print(user)
-                    await user.send(f"Episode {follow_dict[now][cur_weekday][anime][0]+1} of {anime} is out!")
-                if follow_dict[now][cur_weekday][anime][1] != "?" and follow_dict[now][cur_weekday][anime][0]+1 == follow_dict[now][cur_weekday][anime][1]:
-                    follow_dict[now][cur_weekday].pop(anime)
+                    await user.send(f"**{anim}** episode **{follow_dict[now][cur_weekday][anim][0]+1}** has been released!")
+                if follow_dict[now][cur_weekday][anim][1] != "?" and follow_dict[now][cur_weekday][anim][0]+1 == follow_dict[now][cur_weekday][anim][1]:
+                    follow_dict[now][cur_weekday].pop(anim)
                     if follow_dict[now][cur_weekday] == {}:
                         follow_dict[now].pop(cur_weekday)
                         if follow_dict[now] == {}:
@@ -308,7 +307,7 @@ class mirko(discord.Client):
                             if follow_dict == {}:
                                 self.anime_follow.stop()
                 else:
-                    follow_dict[now][cur_weekday][anime][0] += 1
+                    follow_dict[now][cur_weekday][anim][0] += 1
             with open('database/follow_dict.pkl', 'wb') as f:
                 pickle.dump(follow_dict, f)
 
@@ -389,7 +388,7 @@ async def self(interaction: discord.Interaction, code: str):
         found = False
         for tag in anime_dict:
             tag2 = [x.lower() for x in tag.translate(
-            str.maketrans('', '', string.punctuation)).split()]
+                str.maketrans('', '', string.punctuation)).split()]
             for word in code:
                 if word in tag2:
                     code = anime_dict[tag]
@@ -481,16 +480,16 @@ async def self(interaction: discord.Interaction):
     if follows:
         for item in follows:
             for item2 in follows[item]:
-                for anime in follows[item][item2]:
+                for anim in follows[item][item2]:
                     users = list(
-                        map(bot.get_user, follows[item][item2][anime][2]))
+                        map(bot.get_user, follows[item][item2][anim][2]))
                     string = ""
                     for i in users:
                         if users.index(i) == len(users)-1:
                             string += f"{i.name+'#'+i.discriminator}"
                         else:
                             string += f"{i.name+'#'+i.discriminator}, "
-                    msg += f"{anime} - {string}\n"
+                    msg += f"{anim} - {string}\n"
 
     else:
         msg = "Follow list is currently empty. Use `/follow` command to add anime to it."
