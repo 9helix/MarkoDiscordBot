@@ -1,5 +1,4 @@
-import requests
-from bs4 import BeautifulSoup as bs
+from jikanpy import Jikan
 import datetime
 from discord import Color
 import time as ti
@@ -22,112 +21,57 @@ genres = {"Action": Color.brand_red(), "Adventure": Color.orange(), "Comedy": Co
 wdays = {"Monday": 1, "Tuesday": 2, "Wednesday": 3,
          "Thursday": 4, "Friday": 5, "Saturday": 6, "Sunday": 7}
 newline = "\n"
+delay_time = datetime.timedelta(hours=1, minutes=15)
+jst_dif = datetime.timedelta(hours=9)
+jikan = Jikan()
 
 
 class anime:
-    def __init__(self, url):
-        self.name = "Unknown"
-        self.tag = ""
-        self.episodes = "Unknown"
-        self.cur_episodes = "Unknown"
-        self.airing = "Unknown"
-        self.broadcast = "Unknown"
-        self.status = "Unknown"
-        self.url = url
-        self.season = "Unknown"
-        self.cover_url = None
-        self.countdown = ""
-        self.genre = "Unknown"
-        self.studio = "Unknown"
-        self.genre1 = ""
-        self.score = "N/A"
-        self.max_episodes = "?"
-
-        self.unix_countdown = ""
-        self.weekday = 0
-        self.start = 0
-
-    def fetch_data(self):
-        page = requests.get(self.url)
-
-        soup = bs(page.content, 'html.parser')
-        stats = soup.find_all("span", {"class": "dark_text"})
-        self.score = soup.find("div", {"class": "score-label"}).text
-        if self.score != "N/A":
-            self.score += "  ⭐"
-        self.name = soup.find("h1", {"class": "title-name h1_bold_none"}).text
-        if soup.find("p", {"class": "title-english title-inherit"}) != None:
-            self.name = soup.find(
-                "p", {"class": "title-english title-inherit"}).text
-        self.tag = self.url[30:35]
-        image = soup.find("img", {"itemprop": "image"})['data-src']
-        self.cover_url = image
-        for i in stats:
-            if i.text == "Aired:":
-                airing = i.parent.text
-                self.airing = airing[10:-3]
-                airing_start = self.airing[:self.airing.find(" to")]
-            elif i.text == "Broadcast:":
-                broadcast = i.parent.text
-                if "Unknown" not in broadcast:
-
-                    self.broadcast = broadcast[16:-7]
-                    broadcast = broadcast[16:-13]
-
-                    broadcast_hour = broadcast.split()[2]
-
-                    self.weekday = wdays[broadcast.split()[0][:-1]]
-                    # ep_time = [int(x) for x in broadcast_hour.split(":")]
-                    ep_date = datetime.datetime.strptime(
-                        broadcast_hour, "%H:%M")-datetime.timedelta(hours=9)
-                    if datetime.datetime.strptime(broadcast_hour, "%H:%M").day != ep_date.day:
-                        self.weekday -= 1
-                        if self.weekday == 0:
-                            self.weekday = 7
-                    self.start = datetime.time(
-                        hour=ep_date.hour, minute=ep_date.minute)
-
-            elif i.text == "Episodes:":
-                episodes = i.parent.text
-                if episodes[13:-3] != "Unknown":
-                    self.max_episodes = int(episodes[13:-3])
-
-            elif i.text == "Status:":
-                status = i.parent.text
-                self.status = status[11:-3]
-            elif i.text == "Premiered:":
-                premiered = i.parent.text
-                if "?" in premiered:
-                    self.season = "Unknown"
-                else:
-                    self.season = premiered[12:-1]
-            elif i.text == "Studios:":
-                studio = i.parent.text
-                if "None found" in studio:
-                    self.studio = "Unknown"
-                else:
-                    self.studio = studio[10:-1]
-            elif "Genre" in i.text:
-                genre1 = i.findNext("span").text
-
-                genre2 = i.findNext("span").findNext("span").text
-                self.genre1 = genre1
-                if genre2 in genres:
-                    self.genre = f"{genre1}, {genre2}"
-                else:
-                    self.genre = genre1
-                break
-
+    def __init__(self, code):
+        self.id = code
+        show = jikan.anime(self.id)
+        # json.loads(requests.get("https://api.jikan.moe/v4/anime/49387").content.decode("utf-8")) no wrapper needed method
+        show = show['data']
+        self.score = str(show['score'])+" ⭐"
+        self.name = show['title']
+        self.cover_url = show["images"]["jpg"]["large_image_url"]
+        self.url = show["url"]
+        self.airing = show["aired"]["string"]
+        self.broadcast = show["broadcast"]['string']
+        if self.broadcast != "Unknown":
+            self.weekday = wdays[show['broadcast']['day'][:-1]]
+            br_time = datetime.datetime.strptime(
+                show['broadcast']['time'], "%H:%M")
+            ep_date = br_time-jst_dif+delay_time
+            if br_time.day != ep_date.day:
+                self.weekday -= 1
+                if self.weekday == 0:
+                    self.weekday = 7
+        self.episodes = 'Unkown'
+        self.max_episodes = show['episodes']
+        if self.max_episodes == None:
+            self.max_episodes = "?"
+        self.status = show['status']
+        if show['season'] != None:
+            self.season = show['season'].capitalize()+str(show['year'])
+        else:
+            self.season = "Unknown"
+        if show['studios'] != []:
+            self.studio = show['studios'][0]['name']
+        else:
+            self.studio = "Unknown"
+        self.genre1 = show['genres'][0]['name']
+        self.genre = ", ".join([x['name'] for x in show['genres']])
         if self.status == "Currently Airing":
-            self.status += "  🟢"
-            time = airing_start+" "+broadcast_hour
-            start = datetime.datetime.strptime(time, '%b %d, %Y %H:%M')
-            start = start - datetime.timedelta(hours=9)
+            self.status += " 🟢"
+            start = datetime.datetime(year=show['prop']['from']['year'], month=show['prop']['from']['month'],
+                                      day=show['prop']['from']['day'], hour=br_time.hour, minute=br_time.minute)-jst_dif+delay_time
             self.cur_episodes = (datetime.datetime.utcnow()-start).days//7+1
             offset = 0
             if self.name in pkl_read("delays"):
                 offset = pkl_read("delays")[self.name]
                 self.cur_episodes -= pkl_read("delays")[self.name]
+
             countdown = datetime.timedelta(
                 days=((self.cur_episodes)+offset)*7)+start
             self.unix_countdown = int(ti.mktime(countdown.timetuple()))
@@ -136,9 +80,9 @@ class anime:
             self.episodes = f"{self.cur_episodes}/{self.max_episodes}"
         elif self.status == "Finished Airing":
             self.status += "  🔴"
-            self.episodes=self.max_episodes
+            self.episodes = self.max_episodes
         else:
             self.status += "  🟡"
 
     def __str__(self):
-        return f"Score: {self.score}\nEpisodes: {self.episodes}\nStatus: {self.status}\nAiring: {self.airing}\n{f'Season: {self.season}'+newline if f'{self.season}'!='Unknown' else ''}Broadcast: {self.broadcast}\nGenre: {self.genre}\nStudio: {self.studio}\nURL: {self.url}{self.unix_countdown}"
+        return f"Score: {self.score}\nEpisodes: {self.episodes}\nStatus: {self.status}\nAiring: {self.airing}\nSeason: {self.season}Broadcast: {self.broadcast}\nGenre: {self.genre}\nStudio: {self.studio}\nURL: {self.url}{self.unix_countdown}"

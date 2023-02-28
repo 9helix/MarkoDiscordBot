@@ -16,7 +16,7 @@ from keep_alive import keep_alive
 from anime import *
 
 utc = datetime.timezone.utc
-astro = datetime.time(hour=12, minute=0, tzinfo=utc)
+astro = datetime.time(hour=16, minute=0, tzinfo=utc)
 
 
 bot = commands.Bot(command_prefix='-', intents=discord.Intents.all())
@@ -40,7 +40,7 @@ f.close()
 
 release_times = [astro]
 
-myuseragent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36"
+myuseragent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
 
 space = '<:space:988547133902819378>'
 ojou = '<:ojou:990313694204395540>'
@@ -344,7 +344,7 @@ async def self(interaction: discord.Interaction, code: str):
     await interaction.response.defer(ephemeral=False)
     with open('database/anime_dict.pkl', 'rb') as f:
         anime_dict = pickle.load(f)
-    if not code.isdigit() and "myanimelist.net" not in code:
+    if not code.isdigit() and "myanimelist.net" not in code:  # ime animea
         code = [x.lower() for x in code.translate(
             str.maketrans('', '', string.punctuation)).split()]
         for tag in anime_dict:
@@ -354,9 +354,9 @@ async def self(interaction: discord.Interaction, code: str):
                 code = anime_dict[tag]
                 break
 
-    elif code.isdigit():
+    elif code.isdigit():  # anime id
         code = "https://myanimelist.net/anime/"+code
-    elif "https://" not in code:
+    elif "https://" not in code:  # potreban sufix
         code = "https://"+code
     if "myanimelist.net" in code:
         code = code[:35]
@@ -413,7 +413,7 @@ async def self(interaction: discord.Interaction, code: str):
                 with open('database/anime_dict.pkl', 'wb') as f:
                     print("pickling anime_dict", anime_dict, type(anime_dict))
                     pickle.dump(anime_dict, f)
-            if "Currently Airing" in show.status:
+            if "Currently Airing" == show.status:
                 subbed = False
                 with open('database/follow_dict.pkl', 'rb') as f:
                     follow_dict = pickle.load(f)
@@ -457,7 +457,7 @@ async def self(interaction: discord.Interaction, code: str):
                 print(
                     f"Successfully subscribed to {show.name}.")
                 await interaction.followup.send(f"Successfully subscribed to **{show.name}**.")
-            elif "Finished Airing" in show.status:
+            elif "Finished Airing" == show.status:
                 print(f"{show.name} anime is already finished.")
                 await interaction.followup.send(f"**{show.name}** anime is already finished.")
             else:  # elif "Not yet aired" in show.status:
