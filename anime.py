@@ -136,6 +136,7 @@ class anime:
             self.episodes = f"{self.cur_episodes}/{self.max_episodes}"
         elif self.status == "Finished Airing":
             self.status += "  🔴"
+            self.episodes=self.max_episodes
         else:
             self.status += "  🟡"
 
