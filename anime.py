@@ -36,6 +36,8 @@ class anime:
         self.name = show['title']
         self.cover_url = show["images"]["jpg"]["large_image_url"]
         self.url = show["url"]
+        self.url = self.url.replace("\\", "")
+        self.url = self.url[:self.url.find("/", 30)]
         self.airing = show["aired"]["string"]
         self.broadcast = show["broadcast"]['string']
         if self.broadcast != "Unknown":

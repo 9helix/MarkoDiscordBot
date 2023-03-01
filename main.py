@@ -354,18 +354,17 @@ async def self(interaction: discord.Interaction, code: str):
                 code = anime_dict[tag]
                 break
 
-    
     if "myanimelist.net" in code:
-        code =code.split("/")
+        code = code.split("/")
         for s in code:
             if s.isdigit():
-                code=s
+                code = int(s)
                 break
-    
+
     try:
-        show=anime(int(code))
+        show = anime(code)
         if show.name not in anime_dict:
-            anime_dict[show.name] = show.url
+            anime_dict[show.name] = show.id
             with open('database/anime_dict.pkl', 'wb') as f:
                 pickle.dump(anime_dict, f)
         out = discord.Embed(title=show.name,
