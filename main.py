@@ -354,15 +354,16 @@ async def self(interaction: discord.Interaction, code: str):
                 code = anime_dict[tag]
                 break
 
-    elif code.isdigit():  # anime id
-        code = "https://myanimelist.net/anime/"+code
-    elif "https://" not in code:  # potreban sufix
-        code = "https://"+code
+    
     if "myanimelist.net" in code:
-        code = code[:35]
-    show = anime(code)
+        code =code.split("/")
+        for s in code:
+            if s.isdigit():
+                code=s
+                break
+    
     try:
-        show.fetch_data()
+        show=anime(int(code))
         if show.name not in anime_dict:
             anime_dict[show.name] = show.url
             with open('database/anime_dict.pkl', 'wb') as f:
