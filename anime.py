@@ -33,7 +33,7 @@ class anime:
         # json.loads(requests.get("https://api.jikan.moe/v4/anime/49387").content.decode("utf-8")) no wrapper needed method
         show = show['data']
         self.score = str(show['score'])+" ⭐"
-        self.name = show['title']
+        self.name = show['title_english']
         self.cover_url = show["images"]["jpg"]["large_image_url"]
         self.url = show["url"]
         self.url = self.url.replace("\\", "")
@@ -66,6 +66,7 @@ class anime:
             self.studio = "Unknown"
         self.genre1 = show['genres'][0]['name']
         self.genre = ", ".join([x['name'] for x in show['genres']])
+        self.unix_countdown=""
         if self.status == "Currently Airing":
             self.status += " 🟢"
             start = datetime.datetime(year=show["aired"]['prop']['from']['year'], month=show["aired"]['prop']['from']['month'],
