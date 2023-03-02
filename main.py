@@ -49,15 +49,6 @@ dms = ['bok', 'yo', 'di si', 'rock']
 respond = ['Nema na čemu!', 'Np']
 
 
-def timer(hr, mins=0, days=0):
-    now = datetime.now()
-    start = datetime.timedelta(
-        hours=now.hour, minutes=now.minute, seconds=now.second)
-    end = datetime.timedelta(hours=hr, minutes=mins)
-    delta = (end - start).seconds + days * 3600 * 24
-    return delta
-
-
 def check(value):
     if 'A' in value or 'B' in value:
         return 'Quiet'
@@ -87,7 +78,6 @@ def sun_find():
     url2 = 'https://www.spaceweatherlive.com/includes/live-data.php?object=Plasma_Speed&lang=EN'
     # payload = {}
     headers = {
-        # 'PostmanRuntime/7.29.0',
         'User-Agent':
         myuseragent,
         'Accept': '*/*',
@@ -182,6 +172,33 @@ if pkl_read("follow_dict") != {}:
                 show.fetch_data()
                 follow_dict[time][day][serie][0] = show.cur_episodes
     pkl_write("follow_dict", follow_dict)
+
+
+def detect(code):
+    with open('database/anime_dict.pkl', 'rb') as f:
+        anime_dict = pickle.load(f)
+
+    if "myanimelist.net" in code:
+        err = "Invalid URL."
+        code = code.split("/")
+        for s in code:
+            if s.isdigit():
+                code = int(s)
+                break
+    elif code.isdigit():
+        err = "Invalid code."
+        code = int(code)
+    else:  # ime animea
+        err = "Invalid anime name."
+        code = [x.lower() for x in code.translate(
+            str.maketrans('', '', string.punctuation)).split()]
+        for tag in anime_dict:
+            tag2 = [x.lower() for x in tag.translate(
+                str.maketrans('', '', string.punctuation)).split()]
+            if all(a in tag2 for a in code):
+                code = anime_dict[tag]
+                break
+    return code, err
 
 
 class mirko(discord.Client):
@@ -342,25 +359,8 @@ async def self(interaction: discord.Interaction):
 @tree.command(name='anime', description="Sends data about given anime. Use code, MAL URL or anime name to get data.")
 async def self(interaction: discord.Interaction, code: str):
     await interaction.response.defer(ephemeral=False)
-    with open('database/anime_dict.pkl', 'rb') as f:
-        anime_dict = pickle.load(f)
-    if not code.isdigit() and "myanimelist.net" not in code:  # ime animea
-        code = [x.lower() for x in code.translate(
-            str.maketrans('', '', string.punctuation)).split()]
-        for tag in anime_dict:
-            tag2 = [x.lower() for x in tag.translate(
-                str.maketrans('', '', string.punctuation)).split()]
-            if all(a in tag2 for a in code):
-                code = anime_dict[tag]
-                break
 
-    if "myanimelist.net" in code:
-        code = code.split("/")
-        for s in code:
-            if s.isdigit():
-                code = int(s)
-                break
-
+    code, err = detect(code)
     try:
         show = anime(code)
         if show.name not in anime_dict:
@@ -372,104 +372,77 @@ async def self(interaction: discord.Interaction, code: str):
                             color=genres[show.genre1])
         out.set_image(url=show.cover_url)
         await interaction.followup.send(embed=out)
-    except Exception as e:
-        await interaction.followup.send("Invalid URL, code or anime name.")
+    except Exception:
+        await interaction.followup.send(err)
 
 
 @tree.command(name='follow', description="Notifies you when a new episode of a given anime comes.")
 async def self(interaction: discord.Interaction, code: str):
     await interaction.response.defer(ephemeral=False)
-    found = True
-    with open('database/anime_dict.pkl', 'rb') as f:
-        anime_dict = pickle.load(f)
-    if not code.isdigit() and "myanimelist.net" not in code:
-        code = [x.lower() for x in code.translate(
-            str.maketrans('', '', string.punctuation)).split()]
-        found = False
-        for tag in anime_dict:
-            tag2 = [x.lower() for x in tag.translate(
-                str.maketrans('', '', string.punctuation)).split()]
-            for word in code:
-                if word in tag2:
-                    code = anime_dict[tag]
-                    found = True
-                    break
-            if word in tag2:
-                break
 
-    elif code.isdigit():
-        code = "https://myanimelist.net/anime/"+code
-    elif "https://" not in code:
-        code = "https://"+code
-    if "myanimelist.net" in code:
-        code = code[:35]
+    code, err = detect(code)
+    try:
+        show = anime(code)
+        if show.name not in anime_dict:
+            anime_dict[show.name] = show.id
+            with open('database/anime_dict.pkl', 'wb') as f:
+                print("pickling anime_dict", anime_dict, type(anime_dict))
+                pickle.dump(anime_dict, f)
+        if "Currently Airing" == show.status:
+            subbed = False
+            with open('database/follow_dict.pkl', 'rb') as f:
+                follow_dict = pickle.load(f)
+            empty = False
+            if follow_dict == {}:
+                empty = True
 
-    show = anime(code)
-    if found:
-        try:
-            show.fetch_data()
-            if show.name not in anime_dict:
-                anime_dict[show.name] = show.url
-                with open('database/anime_dict.pkl', 'wb') as f:
-                    print("pickling anime_dict", anime_dict, type(anime_dict))
-                    pickle.dump(anime_dict, f)
-            if "Currently Airing" == show.status:
-                subbed = False
-                with open('database/follow_dict.pkl', 'rb') as f:
-                    follow_dict = pickle.load(f)
-                empty = False
-                if follow_dict == {}:
-                    empty = True
-
-                if show.start not in follow_dict:
-                    follow_dict[show.start] = {show.weekday: {show.name: [
-                        show.cur_episodes, show.max_episodes, [interaction.user.id]]}}
+            if show.start not in follow_dict:
+                follow_dict[show.start] = {show.weekday: {show.name: [
+                    show.cur_episodes, show.max_episodes, [interaction.user.id]]}}
+            else:
+                if show.weekday not in follow_dict[show.start]:
+                    follow_dict[show.start][show.weekday] = {show.name: [
+                        show.cur_episodes, show.max_episodes, [interaction.user]]}
                 else:
-                    if show.weekday not in follow_dict[show.start]:
-                        follow_dict[show.start][show.weekday] = {show.name: [
-                            show.cur_episodes, show.max_episodes, [interaction.user]]}
+                    if show.name not in follow_dict[show.start][show.weekday]:
+                        follow_dict[show.start][show.weekday][show.name] = [
+                            show.cur_episodes, show.max_episodes, [interaction.user]]
                     else:
-                        if show.name not in follow_dict[show.start][show.weekday]:
-                            follow_dict[show.start][show.weekday][show.name] = [
-                                show.cur_episodes, show.max_episodes, [interaction.user]]
+                        if interaction.user not in follow_dict[show.start][show.weekday][show.name][2]:
+                            follow_dict[show.start][show.weekday][show.name][2].append(
+                                interaction.user)
+
                         else:
-                            if interaction.user not in follow_dict[show.start][show.weekday][show.name][2]:
-                                follow_dict[show.start][show.weekday][show.name][2].append(
-                                    interaction.user)
+                            subbed = True
+                            await interaction.followup.send(f"You are already subscribed to **{show.name}**.")
+        if not subbed:
+            release_times = [x for x in follow_dict]
+            print("release_times", release_times, "\n", follow_dict)
+            mirko.anime_follow.change_interval(time=release_times)
+            print(mirko.anime_follow.time)
+            if empty:
+                print("starting anime_follow task")
+                mirko.anime_follow.start()
+                empty = False
 
-                            else:
-                                subbed = True
-                                await interaction.followup.send(f"You are already subscribed to **{show.name}**.")
-            if not subbed:
-                release_times = [x for x in follow_dict]
-                print("release_times", release_times, "\n", follow_dict)
-                mirko.anime_follow.change_interval(time=release_times)
-                print(mirko.anime_follow.time)
-                if empty:
-                    print("starting anime_follow task")
-                    mirko.anime_follow.start()
-                    empty = False
+            with open('database/follow_dict.pkl', 'wb') as f:
+                print("pickling follow_dict",
+                      follow_dict, type(follow_dict), type(interaction.user))
+                pickle.dump(follow_dict, f)
+            print(
+                f"Successfully subscribed to {show.name}.")
+            await interaction.followup.send(f"Successfully subscribed to **{show.name}**.")
+        elif "Finished Airing" == show.status:
+            print(f"{show.name} anime is already finished.")
+            await interaction.followup.send(f"**{show.name}** anime is already finished.")
+        else:  # elif "Not yet aired" in show.status:
+            if show.broadcast == "Unknown":
+                await interaction.followup.send(f"**{show.name}** anime wasn't yet released.")
+            else:
+                pass  # follow anime scheduled in future
 
-                with open('database/follow_dict.pkl', 'wb') as f:
-                    print("pickling follow_dict",
-                          follow_dict, type(follow_dict), type(interaction.user))
-                    pickle.dump(follow_dict, f)
-                print(
-                    f"Successfully subscribed to {show.name}.")
-                await interaction.followup.send(f"Successfully subscribed to **{show.name}**.")
-            elif "Finished Airing" == show.status:
-                print(f"{show.name} anime is already finished.")
-                await interaction.followup.send(f"**{show.name}** anime is already finished.")
-            else:  # elif "Not yet aired" in show.status:
-                if show.broadcast == "Unknown":
-                    await interaction.followup.send(f"**{show.name}** anime wasn't yet released.")
-                else:
-                    pass  # follow anime scheduled in future
-
-        except Exception as e:
-            await interaction.response.send_message("Invalid URL, code or anime name.")
-    else:
-        await interaction.followup.send("Invalid URL, code or anime name.")
+    except Exception:
+        await interaction.response.send_message(err)
 
 
 @tree.command(name='follow_list', description="Sends list of followed animes and users that have followed them.")
@@ -499,27 +472,10 @@ async def self(interaction: discord.Interaction):
 @tree.command(name='delay_anime', description="Delays anime by 1 week. Use code, MAL URL or anime name to get data.")
 async def self(interaction: discord.Interaction, code: str):
     await interaction.response.defer(ephemeral=False)
-    with open('database/anime_dict.pkl', 'rb') as f:
-        anime_dict = pickle.load(f)
-    if not code.isdigit() and "myanimelist.net" not in code:
-        code = [x.lower() for x in code.translate(
-            str.maketrans('', '', string.punctuation)).split()]
-        for tag in anime_dict:
-            tag2 = [x.lower() for x in tag.translate(
-                str.maketrans('', '', string.punctuation)).split()]
-            if all(a in tag2 for a in code):
-                code = anime_dict[tag]
-                break
+    code, err = detect(code)
 
-    elif code.isdigit():
-        code = "https://myanimelist.net/anime/"+code
-    elif "https://" not in code:
-        code = "https://"+code
-    if "myanimelist.net" in code:
-        code = code[:35]
-    show = anime(code)
     try:
-        show.fetch_data()
+        show = anime(code)
         delay_dict = pkl_read("delays")
         if show.name not in delay_dict:
             delay_dict[show.name] = 1
@@ -532,7 +488,7 @@ async def self(interaction: discord.Interaction, code: str):
             pkl_write("follow_dict", follow_dict)
         await interaction.followup.send(f"{show.name} delayed by 1 episode.")
     except Exception as e:
-        await interaction.followup.send("Invalid URL, code or anime name.")
+        await interaction.followup.send(err)
 
 
 @tree.command(name='anime_clear', description="Empties anime list.")

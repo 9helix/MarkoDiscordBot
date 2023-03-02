@@ -49,6 +49,8 @@ class anime:
                 self.weekday -= 1
                 if self.weekday == 0:
                     self.weekday = 7
+            self.start = datetime.time(
+                hour=ep_date.hour, minute=ep_date.minute)
         self.episodes = 'Unkown'
         self.max_episodes = show['episodes']
         if self.max_episodes == None:
