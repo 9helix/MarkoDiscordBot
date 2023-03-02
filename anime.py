@@ -32,7 +32,10 @@ class anime:
         show = jikan.anime(self.id)
         # json.loads(requests.get("https://api.jikan.moe/v4/anime/49387").content.decode("utf-8")) no wrapper needed method
         show = show['data']
-        self.score = str(show['score'])+" ⭐"
+        if show['score']==None:
+            self.score="N/A" +" ⭐"
+        else:
+            self.score = str(show['score'])+" ⭐"
         self.name = show['title_english']
         self.cover_url = show["images"]["jpg"]["large_image_url"]
         self.url = show["url"]
@@ -57,7 +60,7 @@ class anime:
             self.max_episodes = "?"
         self.status = show['status']
         if show['season'] != None:
-            self.season = show['season'].capitalize()+str(show['year'])
+            self.season = show['season'].capitalize()+" "+str(show['year'])
         else:
             self.season = "Unknown"
         if show['studios'] != []:
