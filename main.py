@@ -169,7 +169,6 @@ if pkl_read("follow_dict") != {}:
         for day in follow_dict[time]:
             for serie in follow_dict[time][day]:
                 show = anime(anime_dict[serie])
-                show.fetch_data()
                 follow_dict[time][day][serie][0] = show.cur_episodes
     pkl_write("follow_dict", follow_dict)
 
