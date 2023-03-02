@@ -90,7 +90,3 @@ class anime:
 
     def __str__(self):
         return f"Score: {self.score}\nEpisodes: {self.episodes}\nStatus: {self.status}\nAiring: {self.airing}\nSeason: {self.season}\nBroadcast: {self.broadcast}\nGenre: {self.genre}\nStudio: {self.studio}\nURL: {self.url}{self.unix_countdown}"
-
-
-x = anime(49387)
-print(x)
