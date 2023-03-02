@@ -68,8 +68,8 @@ class anime:
         self.genre = ", ".join([x['name'] for x in show['genres']])
         if self.status == "Currently Airing":
             self.status += " 🟢"
-            start = datetime.datetime(year=show['prop']['from']['year'], month=show['prop']['from']['month'],
-                                      day=show['prop']['from']['day'], hour=br_time.hour, minute=br_time.minute)-jst_dif+delay_time
+            start = datetime.datetime(year=show["aired"]['prop']['from']['year'], month=show["aired"]['prop']['from']['month'],
+                                      day=show["aired"]['prop']['from']['day'], hour=br_time.hour, minute=br_time.minute)-jst_dif+delay_time
             self.cur_episodes = (datetime.datetime.utcnow()-start).days//7+1
             offset = 0
             if self.name in pkl_read("delays"):
@@ -89,4 +89,8 @@ class anime:
             self.status += "  🟡"
 
     def __str__(self):
-        return f"Score: {self.score}\nEpisodes: {self.episodes}\nStatus: {self.status}\nAiring: {self.airing}\nSeason: {self.season}Broadcast: {self.broadcast}\nGenre: {self.genre}\nStudio: {self.studio}\nURL: {self.url}{self.unix_countdown}"
+        return f"Score: {self.score}\nEpisodes: {self.episodes}\nStatus: {self.status}\nAiring: {self.airing}\nSeason: {self.season}\nBroadcast: {self.broadcast}\nGenre: {self.genre}\nStudio: {self.studio}\nURL: {self.url}{self.unix_countdown}"
+
+
+x = anime(49387)
+print(x)
