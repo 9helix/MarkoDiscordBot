@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 from discord import app_commands
 from discord.ext import commands, tasks
 import datetime
+from time import *
 
 from keep_alive import keep_alive
 
@@ -170,6 +171,7 @@ if pkl_read("follow_dict") != {}:
             for serie in follow_dict[time][day]:
                 show = anime(anime_dict[serie])
                 follow_dict[time][day][serie][0] = show.cur_episodes
+                sleep(0.4)
     pkl_write("follow_dict", follow_dict)
 
 
