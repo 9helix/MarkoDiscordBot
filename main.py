@@ -194,7 +194,7 @@ def detect(code):
         code = [x.lower() for x in code.translate(
             str.maketrans('', '', string.punctuation)).split()]
         for tag in anime_dict:
-            if tag!=None:
+            if tag != None:
                 tag2 = [x.lower() for x in tag.translate(
                     str.maketrans('', '', string.punctuation)).split()]
                 if all(a in tag2 for a in code):
@@ -426,13 +426,13 @@ async def self(interaction: discord.Interaction, code: str):
                 release_times = [x for x in follow_dict]
                 print("release_times", release_times, "\n", follow_dict)
                 mirko.anime_follow.change_interval(time=release_times)
-                prit("interval changed",mirko.anime_follow.time)
+                print("interval changed", mirko.anime_follow.time)
                 print(mirko.anime_follow.time)
                 if empty:
                     print("starting anime_follow task")
                     mirko.anime_follow.start()
                     empty = False
-    
+
                 with open('database/follow_dict.pkl', 'wb') as f:
                     print("pickling follow_dict",
                           follow_dict, type(follow_dict), type(interaction.user))
@@ -451,7 +451,8 @@ async def self(interaction: discord.Interaction, code: str):
 
     else:
         await interaction.followup.send(err)
-        
+
+
 @tree.command(name='unfollow', description="Unfollows a given anime.")
 async def self(interaction: discord.Interaction, code: str):
     await interaction.response.defer(ephemeral=False)
@@ -475,7 +476,8 @@ async def self(interaction: discord.Interaction, code: str):
                 empty = True
             print("removing from follow_dict")
             if show.start in follow_dict and show.weekday in follow_dict[show.start] and show.name in follow_dict[show.start][show.weekday] and interaction.user.id in follow_dict[show.start][show.weekday][show.name][2]:
-                follow_dict[show.start][show.weekday][show.name][2].remove(interaction.user.id)
+                follow_dict[show.start][show.weekday][show.name][2].remove(
+                    interaction.user.id)
                 if follow_dict[show.start][show.weekday][show.name][2] == []:
                     follow_dict[show.start][show.weekday].pop(show.name)
                     if follow_dict[show.start][show.weekday] == {}:
@@ -486,13 +488,13 @@ async def self(interaction: discord.Interaction, code: str):
                 release_times = list(follow_dict.keys())
                 print("release_times", release_times, "\n", follow_dict)
                 mirko.anime_follow.change_interval(time=release_times)
-                prit("interval changed",mirko.anime_follow.time)
+                print("interval changed", mirko.anime_follow.time)
                 print(mirko.anime_follow.time)
                 if empty:
                     print("starting anime_follow task")
                     mirko.anime_follow.stop()
                     empty = False
-    
+
                 with open('database/follow_dict.pkl', 'wb') as f:
                     print("pickling follow_dict",
                           follow_dict, type(follow_dict), type(interaction.user))
@@ -502,8 +504,7 @@ async def self(interaction: discord.Interaction, code: str):
                 await interaction.followup.send(f"Successfully unsubscribed from **{show.name}**.")
             else:
                 await interaction.followup.send(f"You are not subscribed to **{show.name}**.")
-                
-                
+
         elif "Finished Airing 🔴" == show.status:
             print(f"{show.name} anime is already finished.")
             await interaction.followup.send(f"**{show.name}** anime is already finished.")
@@ -515,6 +516,7 @@ async def self(interaction: discord.Interaction, code: str):
 
     else:
         await interaction.followup.send(err)
+
 
 @tree.command(name='follow_list', description="Sends list of followed animes and users that have followed them.")
 async def self(interaction: discord.Interaction):
