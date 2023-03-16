@@ -194,11 +194,12 @@ def detect(code):
         code = [x.lower() for x in code.translate(
             str.maketrans('', '', string.punctuation)).split()]
         for tag in anime_dict:
-            tag2 = [x.lower() for x in tag.translate(
-                str.maketrans('', '', string.punctuation)).split()]
-            if all(a in tag2 for a in code):
-                code = anime_dict[tag]
-                break
+            if tag!=None:
+                tag2 = [x.lower() for x in tag.translate(
+                    str.maketrans('', '', string.punctuation)).split()]
+                if all(a in tag2 for a in code):
+                    code = anime_dict[tag]
+                    break
     print(code)
     return code, err
 
