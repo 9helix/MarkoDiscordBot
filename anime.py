@@ -5,13 +5,13 @@ import time as ti
 import pickle
 
 
-def pkl_read(name):
+def pkl_read(name: str):
     with open(f'database/{name}.pkl', 'rb') as f:
         data = pickle.load(f)
         return data
 
 
-def pkl_write(name, data):
+def pkl_write(name: str, data) -> None:
     with open(f'database/{name}.pkl', 'wb') as f:
         pickle.dump(data, f)
 
@@ -31,17 +31,19 @@ class anime:
         self.id = code
         try:
             show = jikan.anime(self.id)
-            self.success=True
+            self.success = True
         except:
-            self.success=False
-        # json.loads(requests.get("https://api.jikan.moe/v4/anime/49387").content.decode("utf-8")) no wrapper needed method
+            self.success = False
+        # json.loads(requests.get("https://api.jikan.moe/v4/anime/49387").content.decode("utf-8")) - no wrapper needed method
         if self.success:
             show = show['data']
-            if show['score']==None:
-                self.score="N/A" +" ⭐"
+            if show['score'] == None:
+                self.score = "N/A" + " ⭐"
             else:
                 self.score = str(show['score'])+" ⭐"
             self.name = show['title_english']
+            if self.name == None:
+                self.name = show['title']
             self.cover_url = show["images"]["jpg"]["large_image_url"]
             self.url = show["url"]
             self.url = self.url.replace("\\", "")
@@ -54,51 +56,65 @@ class anime:
                     show['broadcast']['time'], "%H:%M")
                 ep_date = br_time-jst_dif+delay_time
                 if br_time.day != ep_date.day:
-                    self.weekday -= 1
-                    if self.weekday == 0:
-                        self.weekday = 7
+                    self.weekday = self.weekday - 1 or 7
                 self.start = datetime.time(
                     hour=ep_date.hour, minute=ep_date.minute)
             else:
-                self.broadcast="Unknown"
+                self.broadcast = "Unknown"
             self.episodes = 'Unkown'
-            self.max_episodes = show['episodes']
-            if self.max_episodes == None:
+
+            if show['episodes'] is not None:
+                self.max_episodes = show['episodes']
+            else:
                 self.max_episodes = "?"
+
             self.status = show['status']
-            if show['season'] != None:
+            if show['season']:
                 self.season = show['season'].capitalize()+" "+str(show['year'])
             else:
                 self.season = "Unknown"
-            if show['studios'] != []:
+            if show['studios']:
                 self.studio = show['studios'][0]['name']
             else:
                 self.studio = "Unknown"
             self.genre1 = show['genres'][0]['name']
             self.genre = ", ".join([x['name'] for x in show['genres']])
-            self.unix_countdown=""
+            self.unix_countdown = ""
             if self.status == "Currently Airing":
                 self.status += " 🟢"
                 start = datetime.datetime(year=show["aired"]['prop']['from']['year'], month=show["aired"]['prop']['from']['month'],
                                           day=show["aired"]['prop']['from']['day'], hour=br_time.hour, minute=br_time.minute)-jst_dif+delay_time
-                self.cur_episodes = (datetime.datetime.utcnow()-start).days//7+1
+                self.cur_episodes = (
+                    datetime.datetime.utcnow()-start).days//7+1
                 offset = 0
-                if self.name in pkl_read("delays"):
-                    offset = pkl_read("delays")[self.name]
-                    self.cur_episodes -= pkl_read("delays")[self.name]
-    
+                dels = pkl_read("delays")
+                if self.name in dels:
+                    offset = dels[self.name]
+                    self.cur_episodes -= dels[self.name]
+                del dels
                 countdown = datetime.timedelta(
                     days=((self.cur_episodes)+offset)*7)+start
                 self.unix_countdown = int(ti.mktime(countdown.timetuple()))
                 self.unix_countdown = f"\n\nEpisode {self.cur_episodes+1}: <t:{self.unix_countdown}:R>."
-    
+
                 self.episodes = f"{self.cur_episodes}/{self.max_episodes}"
             elif self.status == "Finished Airing":
-                self.status += "  🔴"
+                self.status += " 🔴"
                 self.episodes = self.max_episodes
-            else:
-                self.status += "  🟡"
+            elif self.status == "Not yet aired":
+                self.status += " 🟡"
+                if self.broadcast != "Unknown":
+                    self.cur_episodes = 0
+                    start = datetime.datetime(year=show["aired"]['prop']['from']['year'], month=show["aired"]['prop']['from']['month'],
+                                              day=show["aired"]['prop']['from']['day'], hour=br_time.hour, minute=br_time.minute)-jst_dif+delay_time
+                    countdown = start
+                    self.unix_countdown = int(ti.mktime(countdown.timetuple()))
+                    self.unix_countdown = f"\n\nEpisode {self.cur_episodes+1}: <t:{self.unix_countdown}:R>."
+
+                    self.episodes = f"{self.cur_episodes}/{self.max_episodes}"
 
     def __str__(self):
         if self.success:
             return f"Score: {self.score}\nEpisodes: {self.episodes}\nStatus: {self.status}\nAiring: {self.airing}\nSeason: {self.season}\nBroadcast: {self.broadcast}\nGenre: {self.genre}\nStudio: {self.studio}\nURL: {self.url}{self.unix_countdown}"
+        else:
+            return "Anime not found."

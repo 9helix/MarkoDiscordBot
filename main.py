@@ -12,7 +12,7 @@ from discord.ext import commands, tasks
 import datetime
 from time import *
 
-from keep_alive import keep_alive
+# from keep_alive import keep_alive
 
 from anime import *
 
@@ -204,6 +204,11 @@ def detect(code):
     return code, err
 
 
+def save_anime(show):
+    anime_dict[show.name] = show.id
+    pkl_write("anime_dict", anime_dict)
+
+
 class mirko(discord.Client):
     def __init__(self):
         super().__init__(intents=discord.Intents.all())
@@ -388,62 +393,45 @@ async def self(interaction: discord.Interaction, code: str):
     if show.success:
         print("show found")
         if show.name not in anime_dict:
-            anime_dict[show.name] = show.id
-            with open('database/anime_dict.pkl', 'wb') as f:
-                print("pickling anime_dict", anime_dict, type(anime_dict))
-                pickle.dump(anime_dict, f)
+            save_anime(show)
         print('branching')
         if "Currently Airing 🟢" == show.status:
             print('anime is airing')
-            subbed = False
-            with open('database/follow_dict.pkl', 'rb') as f:
-                follow_dict = pickle.load(f)
-            empty = False
-            if follow_dict == {}:
-                empty = True
-            print("adding to follow_dict")
-            if show.start not in follow_dict:
-                follow_dict[show.start] = {show.weekday: {show.name: [
-                    show.cur_episodes, show.max_episodes, [interaction.user.id]]}}
-            else:
-                if show.weekday not in follow_dict[show.start]:
-                    follow_dict[show.start][show.weekday] = {show.name: [
-                        show.cur_episodes, show.max_episodes, [interaction.user]]}
-                else:
-                    if show.name not in follow_dict[show.start][show.weekday]:
-                        follow_dict[show.start][show.weekday][show.name] = [
-                            show.cur_episodes, show.max_episodes, [interaction.user]]
-                    else:
-                        if interaction.user not in follow_dict[show.start][show.weekday][show.name][2]:
-                            follow_dict[show.start][show.weekday][show.name][2].append(
-                                interaction.user)
+            follow_dict = pkl_read("follow_dict")
+            empty = False if follow_dict != {} else True
 
-                        else:
-                            subbed = True
-                            await interaction.followup.send(f"You are already subscribed to **{show.name}**.")
-            if not subbed:
+            print("adding to follow_dict")
+
+            follow_dict.setdefault(show.start, {}).setdefault(show.weekday, {}).setdefault(show.name, [
+                show.cur_episodes, show.max_episodes, []
+            ])[2]
+
+            if interaction.user.id not in follow_dict[show.start][show.weekday][show.name][2]:
+                follow_dict[show.start][show.weekday][show.name][2].append(
+                    interaction.user.id)
                 print("sending confirmation")
-                release_times = [x for x in follow_dict]
-                print("release_times", release_times, "\n", follow_dict)
+                release_times = list(follow_dict.keys())
+                print(follow_dict)
                 mirko.anime_follow.change_interval(time=release_times)
                 print("interval changed", mirko.anime_follow.time)
-                print(mirko.anime_follow.time)
                 if empty:
                     print("starting anime_follow task")
                     mirko.anime_follow.start()
                     empty = False
-
-                with open('database/follow_dict.pkl', 'wb') as f:
-                    print("pickling follow_dict",
-                          follow_dict, type(follow_dict), type(interaction.user))
-                    pickle.dump(follow_dict, f)
+                print("pickling follow_dict",
+                      follow_dict, type(follow_dict), type(interaction.user))
+                pkl_write("follow_dict", follow_dict)
                 print(
                     f"Successfully subscribed to {show.name}.")
                 await interaction.followup.send(f"Successfully subscribed to **{show.name}**.")
+            else:
+                await interaction.followup.send(f"You are already subscribed to **{show.name}**.")
+
         elif "Finished Airing 🔴" == show.status:
             print(f"{show.name} anime is already finished.")
             await interaction.followup.send(f"**{show.name}** anime is already finished.")
-        else:  # elif "Not yet aired" in show.status:
+
+        elif "Not yet aired 🟡" == show.status:
             if show.broadcast == "Unknown":
                 await interaction.followup.send(f"**{show.name}** anime wasn't yet released.")
             else:
@@ -462,58 +450,51 @@ async def self(interaction: discord.Interaction, code: str):
     if show.success:
         print("show found")
         if show.name not in anime_dict:
-            anime_dict[show.name] = show.id
-            with open('database/anime_dict.pkl', 'wb') as f:
-                print("pickling anime_dict", anime_dict, type(anime_dict))
-                pickle.dump(anime_dict, f)
+            save_anime(show)
         print('branching')
-        if "Currently Airing 🟢" == show.status or (show.status=="Not yet aired 🟡" 
- and show.broadcast != "Unknown"):
+        if "Currently Airing 🟢" == show.status:
             print('anime is airing')
-            with open('database/follow_dict.pkl', 'rb') as f:
-                follow_dict = pickle.load(f)
-            empty = False
-            if follow_dict == {}:
-                empty = True
+            follow_dict = pkl_read("follow_dict")
+            empty = False if follow_dict != {} else True
+
             print("removing from follow_dict")
-            if show.start in follow_dict and show.weekday in follow_dict[show.start] and show.name in follow_dict[show.start][show.weekday] and interaction.user.id in follow_dict[show.start][show.weekday][show.name][2]:
+            try:
                 follow_dict[show.start][show.weekday][show.name][2].remove(
                     interaction.user.id)
-                if follow_dict[show.start][show.weekday][show.name][2] == []:
+                if not follow_dict[show.start][show.weekday][show.name][2]:
                     follow_dict[show.start][show.weekday].pop(show.name)
-                    if follow_dict[show.start][show.weekday] == {}:
+                    if not follow_dict[show.start][show.weekday]:
                         follow_dict[show.start].pop(show.weekday)
-                        if follow_dict[show.start] == {}:
+                        if not follow_dict[show.start]:
                             follow_dict.pop(show.start)
+
                 print("sending confirmation")
                 release_times = list(follow_dict.keys())
-                print("release_times", release_times, "\n", follow_dict)
+                print(follow_dict)
                 mirko.anime_follow.change_interval(time=release_times)
                 print("interval changed", mirko.anime_follow.time)
-                print(mirko.anime_follow.time)
                 if empty:
-                    print("starting anime_follow task")
+                    print("stopping anime_follow task")
                     mirko.anime_follow.stop()
                     empty = False
-
-                with open('database/follow_dict.pkl', 'wb') as f:
-                    print("pickling follow_dict",
-                          follow_dict, type(follow_dict), type(interaction.user))
-                    pickle.dump(follow_dict, f)
+                print("pickling follow_dict",
+                      follow_dict, type(follow_dict), type(interaction.user))
+                pkl_write("follow_dict", follow_dict)
                 print(
                     f"Successfully unsubscribed from {show.name}.")
                 await interaction.followup.send(f"Successfully unsubscribed from **{show.name}**.")
-            else:
+            except (KeyError, ValueError):
+
                 await interaction.followup.send(f"You are not subscribed to **{show.name}**.")
 
         elif "Finished Airing 🔴" == show.status:
             print(f"{show.name} anime is already finished.")
             await interaction.followup.send(f"**{show.name}** anime is already finished.")
-        else:  # elif "Not yet aired" in show.status:
+        elif "Not yet aired 🟡" == show.status:
             if show.broadcast == "Unknown":
                 await interaction.followup.send(f"**{show.name}** anime wasn't yet released.")
             else:
-                pass  # follow anime scheduled in future
+                pass  # unfollow anime scheduled in future
 
     else:
         await interaction.followup.send(err)
@@ -861,5 +842,5 @@ async def on_command_error(ctx, error):
         await ctx.send("Unknown command.")
 
 
-keep_alive()
+# keep_alive()
 bot.run(token)
