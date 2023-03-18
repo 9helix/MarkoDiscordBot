@@ -467,7 +467,8 @@ async def self(interaction: discord.Interaction, code: str):
                 print("pickling anime_dict", anime_dict, type(anime_dict))
                 pickle.dump(anime_dict, f)
         print('branching')
-        if "Currently Airing 🟢" == show.status:
+        if "Currently Airing 🟢" == show.status or (show.status=="Not yet aired 🟡" 
+ and show.broadcast != "Unknown"):
             print('anime is airing')
             with open('database/follow_dict.pkl', 'rb') as f:
                 follow_dict = pickle.load(f)
