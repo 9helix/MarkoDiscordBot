@@ -547,7 +547,39 @@ async def self(interaction: discord.Interaction, code: str):
             if show.broadcast == "Unknown":
                 await interaction.followup.send(f"**{show.name}** anime wasn't yet released.")
             else:
-                pass  # unfollow anime scheduled in future
+                print('anime is airing')
+            follow_dict = pkl_read("follow_dict")
+            empty = False if follow_dict != {} else True
+
+            print("removing from follow_dict")
+            try:
+                follow_dict[show.start][show.airstart][show.name][2].remove(
+                    interaction.user.id)
+                if not follow_dict[show.start][show.airstart][show.name][2]:
+                    follow_dict[show.start][show.airstart].pop(show.name)
+                    if not follow_dict[show.start][show.airstart]:
+                        follow_dict[show.start].pop(show.airstart)
+                        if not follow_dict[show.start]:
+                            follow_dict.pop(show.start)
+
+                print("sending confirmation")
+                release_times = list(follow_dict.keys())
+                print(follow_dict)
+                mirko.anime_follow.change_interval(time=release_times)
+                print("interval changed", mirko.anime_follow.time)
+                if empty:
+                    print("stopping anime_follow task")
+                    mirko.anime_follow.stop()
+                    empty = False
+                print("pickling follow_dict",
+                      follow_dict, type(follow_dict), type(interaction.user))
+                pkl_write("follow_dict", follow_dict)
+                print(
+                    f"Successfully unsubscribed from {show.name}.")
+                await interaction.followup.send(f"Successfully unsubscribed from **{show.name}**.")
+            except (KeyError, ValueError):
+
+                await interaction.followup.send(f"You are not subscribed to **{show.name}**.")
 
     else:
         await interaction.followup.send(err)
