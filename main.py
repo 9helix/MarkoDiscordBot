@@ -163,8 +163,9 @@ def moon_find():
 
 
 # updating episode count
-anime_dict = pkl_read("anime_dict")
+
 if pkl_read("follow_dict") != {}:
+    anime_dict = pkl_read("anime_dict")
     follow_dict = pkl_read("follow_dict")
     for time in follow_dict:
         for day in follow_dict[time]:
@@ -468,8 +469,8 @@ async def self(interaction: discord.Interaction, code: str):
                     show.cur_episodes, show.max_episodes, []
                 ])[2]
     
-                if interaction.user.id not in follow_dict[show.start][show.weekday][show.name][2]:
-                    follow_dict[show.start][show.weekday][show.name][2].append(
+                if interaction.user.id not in follow_dict[show.start][show.airstart][show.name][2]:
+                    follow_dict[show.start][show.airstart][show.name][2].append(
                         interaction.user.id)
                     print("sending confirmation")
                     release_times = list(follow_dict.keys())
