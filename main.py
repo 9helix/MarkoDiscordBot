@@ -12,7 +12,7 @@ from discord.ext import commands, tasks
 import datetime
 from time import *
 
-# from keep_alive import keep_alive
+from keep_alive import keep_alive
 
 from anime import *
 
@@ -282,7 +282,7 @@ class mirko(discord.Client):
     @tasks.loop(time=release_times)
     async def anime_follow(self):
         global anime
-        now = datetime.datetime.utcnow()
+        now1 = datetime.datetime.utcnow()
 
         with open('database/follow_dict.pkl', 'rb') as f:
             follow_dict = pickle.load(f)
@@ -310,11 +310,13 @@ class mirko(discord.Client):
                             follow_dict[time][day][serie][1] = show.max_episodes
             pkl_write("follow_dict", follow_dict)
 
-        cur_weekday = now.isoweekday()
-        now = datetime.time(hour=now.hour, minute=now.minute)
+        cur_weekday = now1.isoweekday()
+        now = datetime.time(hour=now1.hour, minute=now1.minute)
         # self.anime_follow.change_interval(time=list(follow_dict.keys()))
         print(follow_dict.keys(), now, now in follow_dict)
         # time = self.anime_follow.time[cur_time_index]
+        day=datetime.date(year=now1.year,month=now1.month,day=now1.day)
+        
         if cur_weekday in follow_dict[now]:  # time je bio prije umjesto now
             print("sending anime newsletter...")
             for anim in follow_dict[now][cur_weekday]:
@@ -333,6 +335,27 @@ class mirko(discord.Client):
                                 self.anime_follow.stop()
                 else:
                     follow_dict[now][cur_weekday][anim][0] += 1
+            with open('database/follow_dict.pkl', 'wb') as f:
+                pickle.dump(follow_dict, f)
+                
+        elif day in follow_dict[now]:
+            print("sending anime newsletter...")
+            for anim in follow_dict[now][day]:
+                for user in follow_dict[now][day][anim][2]:
+                    print(user)
+                    user = bot.get_user(user)
+                    print(user)
+                    await user.send(f"**{anim}** episode **{follow_dict[now][day][anim][0]+1}** has been released!")
+                if follow_dict[now][day][anim][1] != "?" and follow_dict[now][day][anim][0]+1 == follow_dict[now][day][anim][1]:
+                    follow_dict[now][day].pop(anim)
+                    if follow_dict[now][day] == {}:
+                        follow_dict[now].pop(day)
+                        if follow_dict[now] == {}:
+                            follow_dict.pop(now)
+                            if follow_dict == {}:
+                                self.anime_follow.stop()
+                else:
+                    follow_dict[now][day][anim][0] += 1
             with open('database/follow_dict.pkl', 'wb') as f:
                 pickle.dump(follow_dict, f)
 
@@ -435,7 +458,36 @@ async def self(interaction: discord.Interaction, code: str):
             if show.broadcast == "Unknown":
                 await interaction.followup.send(f"**{show.name}** anime wasn't yet released.")
             else:
-                pass  # follow anime scheduled in future
+                print('anime will air')
+                follow_dict = pkl_read("follow_dict")
+                empty = False if follow_dict != {} else True
+    
+                print("adding to follow_dict")
+    
+                follow_dict.setdefault(show.start, {}).setdefault(show.airstart, {}).setdefault(show.name, [
+                    show.cur_episodes, show.max_episodes, []
+                ])[2]
+    
+                if interaction.user.id not in follow_dict[show.start][show.weekday][show.name][2]:
+                    follow_dict[show.start][show.weekday][show.name][2].append(
+                        interaction.user.id)
+                    print("sending confirmation")
+                    release_times = list(follow_dict.keys())
+                    print(follow_dict)
+                    mirko.anime_follow.change_interval(time=release_times)
+                    print("interval changed", mirko.anime_follow.time)
+                    if empty:
+                        print("starting anime_follow task")
+                        mirko.anime_follow.start()
+                        empty = False
+                    print("pickling follow_dict",
+                          follow_dict, type(follow_dict), type(interaction.user))
+                    pkl_write("follow_dict", follow_dict)
+                    print(
+                        f"Successfully subscribed to {show.name}.")
+                    await interaction.followup.send(f"Successfully subscribed to **{show.name}**.")
+                else:
+                    await interaction.followup.send(f"You are already subscribed to **{show.name}**.")
 
     else:
         await interaction.followup.send(err)
@@ -842,5 +894,5 @@ async def on_command_error(ctx, error):
         await ctx.send("Unknown command.")
 
 
-# keep_alive()
+keep_alive()
 bot.run(token)
