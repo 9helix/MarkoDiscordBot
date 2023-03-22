@@ -307,7 +307,6 @@ class mirko(discord.Client):
                     for serie in follow_dict[time][day]:
                         if serie in check_anime:
                             show = anime(anime_dict[serie])
-                            show.fetch_data()
                             follow_dict[time][day][serie][1] = show.max_episodes
             pkl_write("follow_dict", follow_dict)
 
@@ -316,8 +315,8 @@ class mirko(discord.Client):
         # self.anime_follow.change_interval(time=list(follow_dict.keys()))
         print(follow_dict.keys(), now, now in follow_dict)
         # time = self.anime_follow.time[cur_time_index]
-        day=datetime.date(year=now1.year,month=now1.month,day=now1.day)
-        
+        day = datetime.date(year=now1.year, month=now1.month, day=now1.day)
+
         if cur_weekday in follow_dict[now]:  # time je bio prije umjesto now
             print("sending anime newsletter...")
             for anim in follow_dict[now][cur_weekday]:
@@ -338,7 +337,7 @@ class mirko(discord.Client):
                     follow_dict[now][cur_weekday][anim][0] += 1
             with open('database/follow_dict.pkl', 'wb') as f:
                 pickle.dump(follow_dict, f)
-                
+
         elif day in follow_dict[now]:
             print("sending anime newsletter...")
             for anim in follow_dict[now][day]:
@@ -357,6 +356,10 @@ class mirko(discord.Client):
                                 self.anime_follow.stop()
                 else:
                     follow_dict[now][day][anim][0] += 1
+            try:
+                follow_dict[now][cur_weekday] = follow_dict[now].pop(day)
+            except KeyError:
+                pass
             with open('database/follow_dict.pkl', 'wb') as f:
                 pickle.dump(follow_dict, f)
 
@@ -382,7 +385,7 @@ async def self(interaction: discord.Interaction):
     if anime_dict:
         for item in anime_dict:
             # <[link]> for disabling embed creation for links
-            msg += f"{item} - <{anime_dict[item]}>\n"
+            msg += f"{item} - <https://myanimelist.net/anime/{anime_dict[item]}>\n"
     else:
         msg = "Anime list is currently empty. Use `/anime` command to add anime to it."
     await interaction.response.send_message(msg)
@@ -462,13 +465,13 @@ async def self(interaction: discord.Interaction, code: str):
                 print('anime will air')
                 follow_dict = pkl_read("follow_dict")
                 empty = False if follow_dict != {} else True
-    
+
                 print("adding to follow_dict")
-    
+
                 follow_dict.setdefault(show.start, {}).setdefault(show.airstart, {}).setdefault(show.name, [
                     show.cur_episodes, show.max_episodes, []
                 ])[2]
-    
+
                 if interaction.user.id not in follow_dict[show.start][show.airstart][show.name][2]:
                     follow_dict[show.start][show.airstart][show.name][2].append(
                         interaction.user.id)

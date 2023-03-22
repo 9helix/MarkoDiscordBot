@@ -50,7 +50,7 @@ class anime:
             self.url = self.url[:self.url.find("/", 30)]
             self.airing = show["aired"]["string"]
             self.broadcast = show["broadcast"]['string']
-            if show["broadcast"]['day'] != None:
+            if show["aired"]['prop']['from']['day'] != None:
                 self.weekday = wdays[show['broadcast']['day'][:-1]]
                 br_time = datetime.datetime.strptime(
                     show['broadcast']['time'], "%H:%M")
@@ -107,7 +107,8 @@ class anime:
                     self.cur_episodes = 0
                     start = datetime.datetime(year=show["aired"]['prop']['from']['year'], month=show["aired"]['prop']['from']['month'],
                                               day=show["aired"]['prop']['from']['day'], hour=br_time.hour, minute=br_time.minute)-jst_dif+delay_time
-                    self.airstart=datetime.date(year=start.year,month=start.month,day=start.day)
+                    self.airstart = datetime.date(
+                        year=start.year, month=start.month, day=start.day)
                     countdown = start
                     self.unix_countdown = int(ti.mktime(countdown.timetuple()))
                     self.unix_countdown = f"\n\nEpisode {self.cur_episodes+1}: <t:{self.unix_countdown}:R>."
