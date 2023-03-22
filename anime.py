@@ -50,7 +50,7 @@ class anime:
             self.url = self.url[:self.url.find("/", 30)]
             self.airing = show["aired"]["string"]
             self.broadcast = show["broadcast"]['string']
-            if show["aired"]['prop']['from']['day'] != None:
+            if show["broadcast"]['string'] != None:
                 self.weekday = wdays[show['broadcast']['day'][:-1]]
                 br_time = datetime.datetime.strptime(
                     show['broadcast']['time'], "%H:%M")
@@ -82,22 +82,21 @@ class anime:
             self.unix_countdown = ""
             if self.status == "Currently Airing":
                 self.status += " 🟢"
-                start = datetime.datetime(year=show["aired"]['prop']['from']['year'], month=show["aired"]['prop']['from']['month'],
-                                          day=show["aired"]['prop']['from']['day'], hour=br_time.hour, minute=br_time.minute)-jst_dif+delay_time
-                self.cur_episodes = (
-                    datetime.datetime.utcnow()-start).days//7+1
-                offset = 0
-                dels = pkl_read("delays")
-                if self.name in dels:
-                    offset = dels[self.name]
-                    self.cur_episodes -= dels[self.name]
-                del dels
-                countdown = datetime.timedelta(
-                    days=((self.cur_episodes)+offset)*7)+start
-                self.unix_countdown = int(ti.mktime(countdown.timetuple()))
-                self.unix_countdown = f"\n\nEpisode {self.cur_episodes+1}: <t:{self.unix_countdown}:R>."
-
-                self.episodes = f"{self.cur_episodes}/{self.max_episodes}"
+                if show["broadcast"]['string'] != None:
+                    start = datetime.datetime(year=show["aired"]['prop']['from']['year'], month=show["aired"]['prop']['from']['month'], day=show["aired"]['prop']['from']['day'], hour=br_time.hour, minute=br_time.minute)-jst_dif+delay_time
+                    self.cur_episodes = (datetime.datetime.utcnow()-start).days//7+1
+                    offset = 0
+                    dels = pkl_read("delays")
+                    if self.name in dels:
+                        offset = dels[self.name]
+                        self.cur_episodes -= dels[self.name]
+                    del dels
+                    countdown = datetime.timedelta(
+                        days=((self.cur_episodes)+offset)*7)+start
+                    self.unix_countdown = int(ti.mktime(countdown.timetuple()))
+                    self.unix_countdown = f"\n\nEpisode {self.cur_episodes+1}: <t:{self.unix_countdown}:R>."
+    
+                    self.episodes = f"{self.cur_episodes}/{self.max_episodes}"
             elif self.status == "Finished Airing":
                 self.status += " 🔴"
                 self.episodes = self.max_episodes
