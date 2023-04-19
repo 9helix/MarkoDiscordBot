@@ -1,3 +1,21 @@
+"""import datetime
+import pickle
+
+with open('database/follow_dict.pkl', 'rb') as f:
+    loaded_dict = pickle.load(f)
+for x in loaded_dict:
+    if x==datetime.time(15, 15):
+        for y in loaded_dict[x]:
+            if y==6:
+                if "Hell's Paradise" in loaded_dict[x][y]:
+                    loaded_dict[x][y]["Hell's Paradise"][2].append(267661331870515200)
+                print("added")
+                break
+        break
+with open('database/follow_dict.pkl', 'wb') as f:
+    pickle.dump(loaded_dict, f)
+exit()
+"""
 import json
 import os
 import random
@@ -167,13 +185,21 @@ def moon_find():
 if pkl_read("follow_dict") != {}:
     anime_dict = pkl_read("anime_dict")
     follow_dict = pkl_read("follow_dict")
-    for time in follow_dict:
-        for day in follow_dict[time]:
-            for serie in follow_dict[time][day]:
+    for time in list(follow_dict):
+        for day in list(follow_dict[time]):
+            for serie in list(follow_dict[time][day]):
                 show = anime(anime_dict[serie])
                 print(serie)
-                follow_dict[time][day][serie][0] = show.cur_episodes
-                sleep(0.4)
+                try:
+                    follow_dict[time][day][serie][0] = show.cur_episodes
+                except AttributeError:
+                    follow_dict[time][day].pop(serie)
+                    if follow_dict[time][day]=={}:
+                        follow_dict[time].pop(day)
+                        if follow_dict[time]=={}:
+                            follow_dict.pop(time)
+                    print("ejected", serie)
+                sleep(0.5)
     pkl_write("follow_dict", follow_dict)
 
 
@@ -429,7 +455,7 @@ async def self(interaction: discord.Interaction, code: str):
             empty = False if follow_dict != {} else True
 
             print("adding to follow_dict")
-
+            print("weekday",show.weekday)
             follow_dict.setdefault(show.start, {}).setdefault(show.weekday, {}).setdefault(show.name, [
                 show.cur_episodes, show.max_episodes, []
             ])[2]
