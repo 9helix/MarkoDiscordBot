@@ -171,6 +171,7 @@ if pkl_read("follow_dict") != {}:
         for day in follow_dict[time]:
             for serie in follow_dict[time][day]:
                 show = anime(anime_dict[serie])
+                print(serie)
                 follow_dict[time][day][serie][0] = show.cur_episodes
                 sleep(0.4)
     pkl_write("follow_dict", follow_dict)
@@ -319,7 +320,7 @@ class mirko(discord.Client):
 
         if cur_weekday in follow_dict[now]:  # time je bio prije umjesto now
             print("sending anime newsletter...")
-            for anim in follow_dict[now][cur_weekday]:
+            for anim in list(follow_dict[now][cur_weekday]):
                 for user in follow_dict[now][cur_weekday][anim][2]:
                     print(user)
                     user = bot.get_user(user)
