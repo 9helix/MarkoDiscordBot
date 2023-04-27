@@ -21,7 +21,7 @@ genres = {"Action": Color.brand_red(), "Adventure": Color.orange(), "Comedy": Co
 wdays = {"Monday": 1, "Tuesday": 2, "Wednesday": 3,
          "Thursday": 4, "Friday": 5, "Saturday": 6, "Sunday": 7}
 newline = "\n"
-delay_time = datetime.timedelta(hours=1, minutes=15)
+delay_time = datetime.timedelta(hours=2, minutes=00)
 jst_dif = datetime.timedelta(hours=9)
 jikan = Jikan()
 
@@ -32,7 +32,8 @@ class anime:
         try:
             show = jikan.anime(self.id)
             self.success = True
-        except:
+        except Exception as e:
+            print(e)
             self.success = False
         # json.loads(requests.get("https://api.jikan.moe/v4/anime/49387").content.decode("utf-8")) - no wrapper needed method
         if self.success:

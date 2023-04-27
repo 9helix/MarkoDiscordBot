@@ -189,7 +189,7 @@ if pkl_read("follow_dict") != {}:
         for day in list(follow_dict[time]):
             for serie in list(follow_dict[time][day]):
                 show = anime(anime_dict[serie])
-                print(serie)
+                print(serie,show.success)
                 try:
                     follow_dict[time][day][serie][0] = show.cur_episodes
                 except AttributeError:
@@ -199,7 +199,7 @@ if pkl_read("follow_dict") != {}:
                         if follow_dict[time]=={}:
                             follow_dict.pop(time)
                     print("ejected", serie)
-                sleep(0.5)
+                sleep(0.75)
     pkl_write("follow_dict", follow_dict)
 
 
@@ -340,7 +340,7 @@ class mirko(discord.Client):
         cur_weekday = now1.isoweekday()
         now = datetime.time(hour=now1.hour, minute=now1.minute)
         # self.anime_follow.change_interval(time=list(follow_dict.keys()))
-        print(follow_dict.keys(), now, now in follow_dict)
+        #print(follow_dict.keys(), now, now in follow_dict)
         # time = self.anime_follow.time[cur_time_index]
         day = datetime.date(year=now1.year, month=now1.month, day=now1.day)
 
@@ -472,8 +472,8 @@ async def self(interaction: discord.Interaction, code: str):
                     print("starting anime_follow task")
                     mirko.anime_follow.start()
                     empty = False
-                print("pickling follow_dict",
-                      follow_dict, type(follow_dict), type(interaction.user))
+                #print("pickling follow_dict",
+                #      follow_dict, type(follow_dict), type(interaction.user))
                 pkl_write("follow_dict", follow_dict)
                 print(
                     f"Successfully subscribed to {show.name}.")
