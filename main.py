@@ -4,14 +4,20 @@ import pickle
 with open('database/follow_dict.pkl', 'rb') as f:
     loaded_dict = pickle.load(f)
 for x in loaded_dict:
-    if x==datetime.time(15, 15):
+    if x==datetime.time(16, 0):
         for y in loaded_dict[x]:
             if y==6:
                 if "Hell's Paradise" in loaded_dict[x][y]:
-                    loaded_dict[x][y]["Hell's Paradise"][2].append(267661331870515200)
+                    #loaded_dict[x][y]["Hell's Paradise"][2].pop(-1)
                 print("added")
-                break
-        break
+
+    elif x==datetime.time(15, 30):
+        for y in loaded_dict[x]:
+            if y==7:
+                if "Demon Slayer: Kimetsu no Yaiba Swordsmith Village Arc" in loaded_dict[x][y]:
+                    del loaded_dict[x][y]["Demon Slayer: Kimetsu no Yaiba Swordsmith Village Arc"]
+                print("removed")
+
 with open('database/follow_dict.pkl', 'wb') as f:
     pickle.dump(loaded_dict, f)
 exit()
@@ -186,10 +192,24 @@ if pkl_read("follow_dict") != {}:
     anime_dict = pkl_read("anime_dict")
     follow_dict = pkl_read("follow_dict")
     for time in list(follow_dict):
+        if follow_dict[time]=={}:
+            del follow_dict[time]
+            continue
         for day in list(follow_dict[time]):
+            if follow_dict[time][day]=={}:
+                del follow_dict[time][day]
+                continue
             for serie in list(follow_dict[time][day]):
+                sleep(0.75)
                 show = anime(anime_dict[serie])
                 print(serie,show.success)
+                if show.start!=time:
+                    x=follow_dict[time][day][serie][2]
+                    del follow_dict[time][day][serie]
+                    follow_dict.setdefault(show.start, {}).setdefault(show.weekday, {}).setdefault(show.name, [
+                show.cur_episodes, show.max_episodes, x
+            ])[2]
+                    continue
                 try:
                     follow_dict[time][day][serie][0] = show.cur_episodes
                 except AttributeError:
@@ -199,7 +219,7 @@ if pkl_read("follow_dict") != {}:
                         if follow_dict[time]=={}:
                             follow_dict.pop(time)
                     print("ejected", serie)
-                sleep(0.75)
+                
     pkl_write("follow_dict", follow_dict)
 
 
