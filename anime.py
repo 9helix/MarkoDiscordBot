@@ -51,7 +51,7 @@ class anime:
             self.url = self.url[:self.url.find("/", 30)]
             self.airing = show["aired"]["string"]
             self.broadcast = show["broadcast"]['string']
-            if show["broadcast"]['string'] != None:
+            if show["broadcast"]['string'] != None and show["broadcast"]['string']!="Unknown":
                 self.weekday = wdays[show['broadcast']['day'][:-1]]
                 br_time = datetime.datetime.strptime(
                     show['broadcast']['time'], "%H:%M")
