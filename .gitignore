@@ -1,11 +1,2 @@
-pkl_create.py
 secret.ini
-venv/
-__pycache__/
-.breakpoints
-=
-poetry.lock
-replit.nix
-.replit
-pyproject.toml
 .vscode/
