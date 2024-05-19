@@ -1,0 +1,6 @@
+# requirements.txt
+beautifulsoup4==4.11.1
+discord.py==2.1.0
+Flask==2.3.2
+jikanpy_v4==1.0.1
+Requests==2.31.0

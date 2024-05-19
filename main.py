@@ -22,23 +22,25 @@ with open('database/follow_dict.pkl', 'wb') as f:
     pickle.dump(loaded_dict, f)
 exit()
 """
+import configparser
+import datetime
 import json
 import os
 import random
-import sys
 import string
-import configparser
+import sys
+from time import *
+
 import discord
 import requests
 from bs4 import BeautifulSoup
 from discord import app_commands
 from discord.ext import commands, tasks
-import datetime
-from time import *
-
-from keep_alive import keep_alive
 
 from anime import *
+
+#from keep_alive import keep_alive
+
 
 utc = datetime.timezone.utc
 astro = datetime.time(hour=16, minute=0, tzinfo=utc)
@@ -441,7 +443,8 @@ async def self(interaction: discord.Interaction):
 @tree.command(name='anime', description="Sends data about given anime. Use code, MAL URL or anime name to get data.")
 async def self(interaction: discord.Interaction, code: str):
     await interaction.response.defer(ephemeral=False)
-
+    with open('database/anime_dict.pkl', 'rb') as f:
+        anime_dict = pickle.load(f)
     code, err = detect(code)
     show = anime(code)
     if show.success:
@@ -461,7 +464,8 @@ async def self(interaction: discord.Interaction, code: str):
 @tree.command(name='follow', description="Notifies you when a new episode of a given anime comes.")
 async def self(interaction: discord.Interaction, code: str):
     await interaction.response.defer(ephemeral=False)
-
+    with open('database/anime_dict.pkl', 'rb') as f:
+        anime_dict = pickle.load(f)
     code, err = detect(code)
     show = anime(code)
     if show.success:
@@ -547,7 +551,8 @@ async def self(interaction: discord.Interaction, code: str):
 @tree.command(name='unfollow', description="Unfollows a given anime.")
 async def self(interaction: discord.Interaction, code: str):
     await interaction.response.defer(ephemeral=False)
-
+    with open('database/anime_dict.pkl', 'rb') as f:
+        anime_dict = pickle.load(f)
     code, err = detect(code)
     show = anime(code)
     if show.success:
@@ -977,5 +982,5 @@ async def on_command_error(ctx, error):
         await ctx.send("Unknown command.")
 
 
-keep_alive()
+#keep_alive()
 bot.run(token)
