@@ -236,7 +236,7 @@ def save_anime(show):
     pkl_write("anime_dict", anime_dict)
 
 
-class mirko(discord.Client):
+class Marko(discord.Client):
     def __init__(self):
         super().__init__(intents=discord.Intents.all())
         self.synced = False
@@ -413,7 +413,7 @@ class mirko(discord.Client):
         await ctx.replay(error, ephemeral=True)
 
 
-bot = mirko()
+bot = Marko()
 tree = app_commands.CommandTree(bot)
 
 # , guild=discord.Object(id=my_channel))
@@ -464,7 +464,7 @@ async def self(interaction: discord.Interaction, code: str):
     name="follow", description="Notifies you when a new episode of a given anime comes."
 )
 async def self(interaction: discord.Interaction, code: str, user: discord.User = None):
-    # await interaction.response.defer(ephemeral=False)
+    await interaction.response.defer(ephemeral=False)
 
     if user:
         if interaction.user.id != admin:
@@ -506,11 +506,11 @@ async def self(interaction: discord.Interaction, code: str, user: discord.User =
                 print("sending confirmation")
                 release_times = list(follow_dict.keys())
                 print(follow_dict)
-                mirko.anime_follow.change_interval(time=release_times)
-                print("interval changed", mirko.anime_follow.time)
+                Marko.anime_follow.change_interval(time=release_times)
+                print("interval changed", Marko.anime_follow.time)
                 if empty:
                     print("starting anime_follow task")
-                    mirko.anime_follow.start()
+                    Marko.anime_follow.start()
                     empty = False
                 # print("pickling follow_dict",
                 #      follow_dict, type(follow_dict), type(interaction.user))
@@ -556,11 +556,11 @@ async def self(interaction: discord.Interaction, code: str, user: discord.User =
                     print("sending confirmation")
                     release_times = list(follow_dict.keys())
                     print(follow_dict)
-                    mirko.anime_follow.change_interval(time=release_times)
-                    print("interval changed", mirko.anime_follow.time)
+                    Marko.anime_follow.change_interval(time=release_times)
+                    print("interval changed", Marko.anime_follow.time)
                     if empty:
                         print("starting anime_follow task")
-                        mirko.anime_follow.start()
+                        Marko.anime_follow.start()
                         empty = False
                     print(
                         "pickling follow_dict",
@@ -614,11 +614,11 @@ async def self(interaction: discord.Interaction, code: str):
                 print("sending confirmation")
                 release_times = list(follow_dict.keys())
                 print(follow_dict)
-                mirko.anime_follow.change_interval(time=release_times)
-                print("interval changed", mirko.anime_follow.time)
+                Marko.anime_follow.change_interval(time=release_times)
+                print("interval changed", Marko.anime_follow.time)
                 if empty:
                     print("stopping anime_follow task")
-                    mirko.anime_follow.stop()
+                    Marko.anime_follow.stop()
                     empty = False
                 print(
                     "pickling follow_dict",
@@ -667,11 +667,11 @@ async def self(interaction: discord.Interaction, code: str):
                 print("sending confirmation")
                 release_times = list(follow_dict.keys())
                 print(follow_dict)
-                mirko.anime_follow.change_interval(time=release_times)
-                print("interval changed", mirko.anime_follow.time)
+                Marko.anime_follow.change_interval(time=release_times)
+                print("interval changed", Marko.anime_follow.time)
                 if empty:
                     print("stopping anime_follow task")
-                    mirko.anime_follow.stop()
+                    Marko.anime_follow.stop()
                     empty = False
                 print(
                     "pickling follow_dict",
@@ -767,8 +767,8 @@ async def self(interaction: discord.Interaction):
         with open("database/follow_dict.pkl", "wb") as f:
             pickle.dump(anime_dict, f)
 
-        if mirko.anime_follow.is_running():
-            mirko.anime_follow.cancel()
+        if Marko.anime_follow.is_running():
+            Marko.anime_follow.cancel()
         await interaction.response.send_message("List deleted.")
 
 
@@ -1018,12 +1018,12 @@ async def self(interaction: discord.Interaction, user: discord.User):
 @tree.command(name="info", description="Sends information about the bot")
 async def self(interaction: discord.Interaction):
     embed = discord.Embed(
-        title="Mirko Bot Komande",
-        description=' \n`/img`   \nšalje random sliku iz baze podataka \n\n  `/pong`  \n šalje Mirkov ping \n\n  `/dm user_id "poruka"`  \nšalje poruku u DM, ako nema id-a poruka se šalje pošiljatelju poruke \n\n  `/sun`  \n šalje podatke o trenutnoj Sunčevoj aktivnosti \n\n  `/moon`  \n šalje trenutnu osvjetljenost Mjeseca',
+        title="Marko Bot Komande",
+        description=' \n`/img`   \nšalje random sliku iz baze podataka \n\n  `/pong`  \n šalje Markov ping \n\n  `/dm user_id "poruka"`  \nšalje poruku u DM, ako nema id-a poruka se šalje pošiljatelju poruke \n\n  `/sun`  \n šalje podatke o trenutnoj Sunčevoj aktivnosti \n\n  `/moon`  \n šalje trenutnu osvjetljenost Mjeseca',
         color=discord.Colour.red(),
     )
     embed.set_author(
-        name="Mirko Bot",
+        name="Marko Bot",
         icon_url="https://static.miraheze.org/hololivewiki/thumb/0/06/Album_Cover_Art_-_YoinoYoYoi.png/1200px-Album_Cover_Art_-_YoinoYoYoi.png",
     )
     embed.set_footer(text="For aditional information message Helix#3958.")

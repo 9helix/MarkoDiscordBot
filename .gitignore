@@ -2,3 +2,4 @@ secret.ini
 .vscode/
 database/
 scripts/
+__pycache__/
