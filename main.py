@@ -1044,11 +1044,20 @@ async def on_command_error(ctx, error):
 
 
 @bot.event
-async def on_message(self, message):
-        # Check if the message is from the specified user and contains an image
-        if message.author.id == 267661331870515200 and message.channel.id == 998348639430778940:
-            if any(attachment.url.endswith(('png', 'jpg', 'jpeg', 'gif')) for attachment in message.attachments):
-                await message.channel.send("juraj daily cringeposting goal hit")
+async def on_message(message):
+    # Check if the message is from the specified user and contains an image
+
+    if (
+        message.author.id == 267661331870515200
+        and message.channel.id == 998348639430778940
+    ):
+        if any(
+            attachment.url[: attachment.url.find("?ex")].endswith(
+                ("png", "jpg", "jpeg", "gif")
+            )
+            for attachment in message.attachments
+        ):
+            await message.channel.send("juraj daily cringeposting goal hit")
 
 
 bot.run(token)
