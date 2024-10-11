@@ -1057,7 +1057,8 @@ async def on_message(message):
             )
             for attachment in message.attachments
         ):
-            await message.channel.send("juraj daily cringeposting goal hit")
+            await asyncio.sleep(random.randint(100,1000)
+            await message.channel.send("juraj daily cringeposting goal hit",reference=message)
 
 
 bot.run(token)
